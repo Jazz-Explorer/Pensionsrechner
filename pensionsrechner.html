@@ -127,6 +127,7 @@ table.daten tr.s-unter, table.daten tr.s-befreit { background: var(--info-bg) }
 table.daten tr.s-unguenstig { background: var(--bad-bg) }
 table.daten tr.s-mindest { background: var(--warn-bg) }
 table.daten tr.s-ok { background: var(--ok-bg) }
+table.daten tr.s-pension { background: var(--bad-bg); color: var(--bad); font-weight: 600 }
 .legende { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem }
 .legende span { padding: 2px 8px; border-radius: 4px }
 .chart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px }
@@ -237,7 +238,20 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
       </fieldset>
 
       <fieldset class="box">
-        <legend>Pension (reguläre Alterspension)</legend>
+        <legend>Pension</legend>
+        <div class="row full" data-tip="Welche Pension beziehen Sie? Davon hängt ab, ob der Zuverdienst die Pension verringert:&#10;• Reguläre Alterspension: unbegrenzt dazuverdienen&#10;• Korridor-, Schwerarbeits-, Langzeitversicherten-, Teilpension: über 551,10 €/Monat (mit Pflichtversicherung) ENTFÄLLT die Pension&#10;• Invaliditäts-/BU-Pension: über der Grenze ggf. Teilpension (Kürzung)&#10;• Witwen-/Witwerpension: kein Wegfall">
+          <label for="pension_art" class="small muted">Pensionsart</label>
+          <select id="pension_art">
+            <option value="regulaer">Reguläre Alterspension (ab Regelpensionsalter)</option>
+            <option value="korridor">Korridorpension</option>
+            <option value="langzeit">Vorzeitige Alterspension – Langzeitversicherte („Hacklerregelung“)</option>
+            <option value="schwerarbeit">Schwerarbeitspension</option>
+            <option value="teilpension">Teilpension (seit 2026)</option>
+            <option value="invaliditaet">Invaliditäts-/Berufsunfähigkeits-/Erwerbsunfähigkeitspension</option>
+            <option value="witwe">Witwen-/Witwerpension</option>
+          </select>
+        </div>
+        <div class="hint"><a href="#h-pensionsart" data-hilfe="h-pensionsart">Wie viel darf ich bei meiner Pensionsart dazuverdienen?</a></div>
         <div class="row full" data-tip="Wie wollen Sie die Pension eingeben?&#10;• Brutto/Monat laut Pensionsbescheid (14× pro Jahr)&#10;• Brutto/Jahr (Summe aller 14 Bezüge)&#10;• Netto/Monat laut Kontoauszug – Brutto wird zurückgerechnet">
           <select id="pension_modus" aria-label="Eingabeart Pension">
             <option value="brutto_monat">Brutto pro Monat (14× jährlich)</option>
@@ -269,6 +283,7 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
         <div class="row" data-z="umsatz_jahr" data-tip="Summe aller Honorare im Jahr (ohne Umsatzsteuer)."><label for="umsatz_jahr">Jahresumsatz</label><input type="text" inputmode="decimal" class="zahl" id="umsatz_jahr"><span class="unit">€</span></div>
         <div class="row" data-z="umsatz_monat" data-tip="Durchschnittliches Honorar pro Monat – wird × 12 gerechnet."><label for="umsatz_monat">Monatsumsatz</label><input type="text" inputmode="decimal" class="zahl" id="umsatz_monat"><span class="unit">€</span></div>
         <div class="row" data-z="gewinn_jahr" data-tip="Gewinn = Einnahmen minus alle Betriebsausgaben, aber VOR Abzug der SVS-Beiträge. Betriebsausgaben-Felder werden dann nicht verwendet."><label for="gewinn_jahr">Gewinn vor SVS</label><input type="text" inputmode="decimal" class="zahl" id="gewinn_jahr"><span class="unit">€</span></div>
+        <div class="row" data-tip="In wie vielen Monaten des Jahres üben Sie die Tätigkeit aus? Erwerbseinkommen pro Monat = Gewinn vor SVS ÷ Monate – wichtig für die Geringfügigkeitsgrenze bei vorzeitigen Pensionen und der Teilpension. Die Pension entfällt bzw. wird gekürzt nur in diesen Monaten."><label for="taetigkeitsmonate">Tätigkeitsmonate im Jahr</label><input type="text" inputmode="numeric" class="zahl" id="taetigkeitsmonate"><span class="unit">Mon.</span></div>
       </fieldset>
 
       <fieldset class="box" id="boxBA">
@@ -326,7 +341,7 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
       <button class="btn" type="button" id="csvExport" data-tip="Tabelle als CSV-Datei für Excel speichern (Strichpunkt, Dezimalkomma).">CSV exportieren</button>
       <div class="legende" style="margin-left:auto">
         <span style="background:var(--info-bg)">unter Grenze / befreit</span><span style="background:var(--bad-bg)">ungünstig</span>
-        <span style="background:var(--warn-bg)">Mindestbeitrag</span><span style="background:var(--ok-bg)">lohnend</span>
+        <span style="background:var(--warn-bg)">Mindestbeitrag</span><span style="background:var(--bad-bg);color:var(--bad);font-weight:600">Pension entfällt/gekürzt</span><span style="background:var(--ok-bg)">lohnend</span>
       </div>
     </div>
     <div class="chart" data-tip="Grün: Netto-Zuverdienst pro Jahr · Rot: SVS · Blau: Mehrsteuer. Rosa Fläche = ungünstiger Bereich knapp über der Grenze."><svg id="diagramm" viewBox="0 0 1000 320" role="img" aria-label="Diagramm Netto-Zuverdienst, SVS und Mehrsteuer"></svg></div>
@@ -458,6 +473,16 @@ const PARAMETER_DEF = [
   ["ba_ku_dl","Betriebsausgaben","KU-Pauschalierung Dienstleistung",20,"%"],
   ["ba_ku_sonst","Betriebsausgaben","KU-Pauschalierung sonstige",45,"%"],
   ["ku_grenze","Betriebsausgaben","Kleinunternehmergrenze (USt/KU-Pausch.)",55000,"€"],
+  ["gfg_monat","Pensionsarten / Zuverdienst","Geringfügigkeitsgrenze (monatlich)",551.1,"€/Monat"],
+  ["wegfall_toleranz","Pensionsarten / Zuverdienst","Vorzeitige Pension: Toleranz Überschreitung/Jahr",40,"% GFG"],
+  ["korridor_bonus","Pensionsarten / Zuverdienst","Korridorpension: Erhöhung je Wegfallmonat",0.55,"%"],
+  ["inv_grenze_1","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Gesamteinkommen Stufe 1 über",1599.99,"€/Monat"],
+  ["inv_grenze_2","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Stufe 2 über",2400.09,"€/Monat"],
+  ["inv_grenze_3","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Stufe 3 über",3199.99,"€/Monat"],
+  ["inv_satz_1","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Anrechnung Stufe 1",30,"%"],
+  ["inv_satz_2","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Anrechnung Stufe 2",40,"%"],
+  ["inv_satz_3","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Anrechnung Stufe 3",50,"%"],
+  ["inv_max","Pensionsarten / Zuverdienst","Teilpension (IP/BU): Anrechnung max.",50,"% Pension"],
   ["tab_von","Tabelle","Tabelle: Start (Std/Woche)",1,"h"],
   ["tab_bis","Tabelle","Tabelle: Ende (Std/Woche)",30,"h"],
   ["tab_schritt","Tabelle","Tabelle: Schrittweite (Std/Woche)",1,"h"],
@@ -469,7 +494,15 @@ const PARAMETER_STANDARD = Object.fromEntries(PARAMETER_DEF.map(d => [d[0], d[3]
 const DEF = Object.fromEntries(PARAMETER_DEF.map(d => [d[0], {gruppe: d[1], label: d[2], std: d[3], einheit: d[4]}]));
 const BA_MODI = {betrag_jahr: "Tatsächliche Ausgaben € / Jahr", betrag_monat: "Tatsächliche Ausgaben € / Monat",
   prozent: "Prozent vom Umsatz", basis: "Basispauschalierung", ku_dl: "KU-Pauschalierung Dienstleistung", ku_sonst: "KU-Pauschalierung sonstige"};
+const PENSION_ARTEN = {
+  regulaer: "Reguläre Alterspension (ab Regelpensionsalter)", korridor: "Korridorpension",
+  langzeit: "Vorzeitige Alterspension – Langzeitversicherte („Hacklerregelung“)", schwerarbeit: "Schwerarbeitspension",
+  teilpension: "Teilpension (seit 2026)", invaliditaet: "Invaliditäts-/Berufsunfähigkeits-/Erwerbsunfähigkeitspension",
+  witwe: "Witwen-/Witwerpension",
+};
+const WEGFALL_ARTEN = ["korridor", "langzeit", "schwerarbeit", "teilpension"];
 const EINGABEN_STANDARD = {
+  pension_art: "regulaer", taetigkeitsmonate: 12,
   pension_modus: "brutto_monat", pension_betrag: 2000, zuv_modus: "stunden", stundensatz: 50, std_woche: 5, wochen: 46,
   umsatz_jahr: 12000, umsatz_monat: 1000, gewinn_jahr: 10000, ba_modus: "betrag_jahr", ba_betrag: 1000, ba_prozent: 10,
   zus_ausgaben: 0, erh_pab: false, gewerbe: false, gsvg_befreiung: true, neugruender: false,
@@ -512,16 +545,40 @@ function veranlagungsfreibetrag(x, p) {
   if (x >= e) return 0;
   return Math.max(0, g - (x - g) * g / (e - g));
 }
-function pensionAusBruttoMonat(monat, p, erh) {
+function pensionAusBruttoMonat(monat, p, erh, wegfall = 0, anr = 0, anrMonate = 0) {
+  // wegfall: Monate, in denen die Pension ruht (13./14. anteilig); anr: Kürzung/Monat (Teilpension IP/BU)
   const anzahl = p.pension_anzahl, lfdMonate = Math.min(anzahl, 12), szAnzahl = Math.max(0, anzahl - 12);
-  const lfd = monat * lfdMonate, sz = monat * szAnzahl, kv = p.pension_kv / 100;
+  const faktor = (12 - wegfall) / 12;
+  const lfd = monat * lfdMonate * faktor - anr * anrMonate, sz = monat * szAnzahl * faktor - anr * szAnzahl * anrMonate / 12;
+  const kv = p.pension_kv / 100;
   const kvLfd = lfd * kv, kvSz = sz * kv, einkuenfte = lfd - kvLfd;
   const pab = pensionistenabsetzbetrag(einkuenfte, p, erh);
   const lstLfd = Math.max(0, tarifsteuer(einkuenfte, p) - pab);
   const lstSz = sonderzahlungSteuer(sz - kvSz, p);
   return { monat, lfd, sz, brutto: lfd + sz, kv: kvLfd + kvSz, einkuenfte, pab, lst_lfd: lstLfd, lst_sz: lstSz,
     lst: lstLfd + lstSz, netto: lfd + sz - kvLfd - kvSz - lstLfd - lstSz,
-    netto_monat_lfd: lfdMonate ? (lfd - kvLfd - lstLfd) / lfdMonate : 0 };
+    netto_monat_lfd: lfdMonate ? (lfd - kvLfd - lstLfd) / lfdMonate : 0, wegfall_monate: wegfall, anrechnung: anr, anr_monate: anrMonate };
+}
+const taetMonate = e => Math.min(12, Math.max(1, Math.round(e.taetigkeitsmonate || 12)));
+function pensionWirkung(g0, svs, pension, e, p) {
+  const art = e.pension_art || "regulaer", monate = taetMonate(e), em = Math.max(0, g0) / monate, gfg = p.gfg_monat;
+  const w = {art, monate, einkommen_monat: em, wegfall: 0, anrechnung: 0, gesamteinkommen: 0};
+  if (WEGFALL_ARTEN.includes(art)) {
+    if (svs.pflicht && em > gfg && (em - gfg) * monate > p.wegfall_toleranz / 100 * gfg) w.wegfall = monate;
+  } else if (art === "invaliditaet" && em > gfg) {
+    const pm = pension.monat, g = pm + em;
+    w.gesamteinkommen = g;
+    const stufen = [[p.inv_grenze_1, p.inv_grenze_2, p.inv_satz_1], [p.inv_grenze_2, p.inv_grenze_3, p.inv_satz_2], [p.inv_grenze_3, Infinity, p.inv_satz_3]];
+    const anr = stufen.reduce((s, [u, o, satz]) => s + Math.max(0, Math.min(g, o) - u) * satz / 100, 0);
+    w.anrechnung = Math.max(0, Math.min(anr, em, pm * p.inv_max / 100));
+  }
+  return w;
+}
+function wegfallGrenzen(e, p) {
+  const art = e.pension_art || "regulaer", monate = taetMonate(e), gfg = p.gfg_monat;
+  if (WEGFALL_ARTEN.includes(art)) return [Math.max(monate * gfg + p.wegfall_toleranz / 100 * gfg, versicherungsgrenze(e, p) || 0)];
+  if (art === "invaliditaet") return [monate * gfg];
+  return [];
 }
 function pensionBruttoAusNetto(nettoMonat, p, erh) {
   if (nettoMonat <= 0) return 0;
@@ -584,9 +641,13 @@ function svsBeitraege(g, u, pensionBrutto, e, p) {
 }
 function pensionAus(e, p) { return pensionAusBruttoMonat(pensionBruttoMonat(e, p), p, e.erh_pab); }
 function berechneMitUmsatz(u, e, p, pension) {
-  pension = pension || pensionAus(e, p);
+  const pensionVoll = pension || pensionAus(e, p);
   const ba = betriebsausgaben(u, e, p), g0 = u - ba;
-  const svs = svsBeitraege(g0, u, pension.brutto, e, p);
+  const svs = svsBeitraege(g0, u, pensionVoll.brutto, e, p);
+  const wirkung = pensionWirkung(g0, svs, pensionVoll, e, p);
+  pension = (wirkung.wegfall || wirkung.anrechnung)
+    ? pensionAusBruttoMonat(pensionVoll.monat, p, e.erh_pab, wirkung.wegfall, wirkung.anrechnung, wirkung.anrechnung ? wirkung.monate : 0)
+    : pensionVoll;
   const kammer = kammerumlage(e, p), kammerBar = TATSAECHLICHE_BA.includes(e.ba_modus) ? 0 : kammer;
   const gewinn = g0 - svs.summe;
   const gfb = Math.max(0, Math.min(gewinn, p.gfb_max_gewinn)) * p.gfb_satz / 100;
@@ -596,8 +657,10 @@ function berechneMitUmsatz(u, e, p, pension) {
   const einkommen = Math.max(0, pension.einkuenfte + eStpfl);
   const estTarif = tarifsteuer(einkommen, p), estGesamt = Math.max(0, estTarif - pension.pab);
   const mehrsteuer = estGesamt - pension.lst_lfd;
-  const nettoZuv = g0 - svs.summe - mehrsteuer - kammerBar, nettoGesamt = pension.netto + nettoZuv;
-  return { umsatz: u, ba, kammer, kammer_bar: kammerBar, gewinn_vor_sv: g0, svs, gewinn, gfb, einkuenfte_sa: eSa, vfb,
+  const nettoGesamt = pension.netto + g0 - svs.summe - mehrsteuer - kammerBar;
+  const nettoZuv = nettoGesamt - pensionVoll.netto;  // Netto-Effekt inkl. Pensionsverlust
+  return { pension_voll: pensionVoll, wirkung, pensionsverlust_brutto: pensionVoll.brutto - pension.brutto,
+    pensionsverlust_netto: pensionVoll.netto - pension.netto, umsatz: u, ba, kammer, kammer_bar: kammerBar, gewinn_vor_sv: g0, svs, gewinn, gfb, einkuenfte_sa: eSa, vfb,
     einkuenfte_stpfl: eStpfl, einkommen, est_tarif: estTarif, est_gesamt: estGesamt, mehrsteuer,
     grenzsteuersatz: grenzsteuersatz(einkommen, p), netto_zuv: nettoZuv, netto_zuv_monat: nettoZuv / 12,
     anteil_umsatz: u > 0 ? nettoZuv / u * 100 : 0, anteil_gewinn: g0 > 0 ? nettoZuv / g0 * 100 : 0,
@@ -612,8 +675,17 @@ function umsatzFuerGewinn(ziel, e, p) {
 }
 function unguenstigerBereich(e, p, pension) {
   pension = pension || pensionAus(e, p);
-  const grenze = versicherungsgrenze(e, p);
-  if (grenze === null) return null;
+  const kand = [], vg = versicherungsgrenze(e, p);
+  if (vg !== null) kand.push(["svs", vg]);
+  for (const g of wegfallGrenzen(e, p)) kand.push(["pension", g]);
+  const bereiche = [];
+  for (const [grund, g] of kand) { const b = bereichAb(g, e, p, pension); if (b) { b.grund = grund; bereiche.push(b); } }
+  if (!bereiche.length) return null;
+  const bester = bereiche.slice().sort((a, b) => (b.umsatz_ende - a.umsatz_ende) || (a.umsatz_grenze - b.umsatz_grenze))[0];
+  if (bereiche.some(b => b.grund === "pension" && b.umsatz_ende >= bester.umsatz_ende - 1)) bester.grund = "pension";
+  return bester;
+}
+function bereichAb(grenze, e, p, pension) {
   const uG = umsatzFuerGewinn(grenze, e, p);
   if (uG === null) return null;
   const nettoUnter = berechneMitUmsatz(Math.max(0, uG - 0.01), e, p, pension).netto_zuv;
@@ -623,6 +695,7 @@ function unguenstigerBereich(e, p, pension) {
     const mid = (lo + hi) / 2;
     if (berechneMitUmsatz(mid, e, p, pension).netto_zuv < nettoUnter) lo = mid; else hi = mid;
   }
+  if (hi - uG < 0.5) return null;  // kein Rückgang an dieser Grenze
   return { umsatz_grenze: uG, umsatz_ende: hi, gewinn_grenze: grenze, gewinn_ende: umsatzMinusBA(hi, e, p), netto_unter: nettoUnter };
 }
 function stundenFuerUmsatz(u, e) { const f = e.stundensatz * e.wochen; return f > 0 ? u / f : null; }
@@ -642,18 +715,21 @@ function warnungen(r, e, p) {
   if (gewerbe && e.gsvg_befreiung && r.umsatz > p.gsvg_ku_umsatz)
     w.push(["rot", `Umsatz über ${fmt(p.gsvg_ku_umsatz)}: Die KV/PV-Befreiung für Kleinunternehmer ist nicht möglich – volle GSVG-Beiträge.`]);
   if (gewerbe && !e.gsvg_befreiung && g <= p.gsvg_ku_gewinn && r.umsatz <= p.gsvg_ku_umsatz) {
-    const ersparnis = berechneMitUmsatz(r.umsatz, {...e, gsvg_befreiung: true}, p, r.pension).netto_zuv - r.netto_zuv;
+    const ersparnis = berechneMitUmsatz(r.umsatz, {...e, gsvg_befreiung: true}, p, r.pension_voll).netto_zuv - r.netto_zuv;
     w.push(["orange", `Ohne Befreiung zahlen Sie GSVG-Beiträge${s.mindest ? " auf die Mindestbeitragsgrundlage" : ""}. Mit beantragter Kleinunternehmer-Befreiung (KV/PV) blieben netto ${fmt(ersparnis)} pro Jahr mehr.`]);
   }
-  if (s.pflicht && ub && r.umsatz < ub.umsatz_ende) {
-    let t = `UNGÜNSTIGER BEREICH: Der Gewinn liegt knapp über der ${grenzname} (${fmt(ub.gewinn_grenze)}). Netto bleibt weniger als knapp unter der Grenze (${fmt(ub.netto_unter)}). Erst ab einem Umsatz von ${fmt(ub.umsatz_ende)} (Gewinn vor SV ${fmt(ub.gewinn_ende)}) lohnt sich der Mehrverdienst.`;
+  w.push(...pensionWarnungen(r, e, p));
+  const gn = ub && ub.grund === "pension" ? "Zuverdienstgrenze (Pensionswegfall bzw. -kürzung)" : grenzname;
+  if (ub && r.umsatz >= ub.umsatz_grenze && r.umsatz < ub.umsatz_ende) {
+    const warum = ub.grund === "pension" ? "Ab dort entfällt bzw. kürzt sich Ihre Pension (und es fallen SVS-Beiträge an)" : "Ab dort fallen SVS-Beiträge auf den ganzen Gewinn an";
+    let t = `UNGÜNSTIGER BEREICH: Der Gewinn liegt über der ${gn} (${fmt(ub.gewinn_grenze)}). ${warum}. Netto bleibt weniger als knapp unter der Grenze (${fmt(ub.netto_unter)}). Erst ab einem Umsatz von ${fmt(ub.umsatz_ende)} (Gewinn vor SV ${fmt(ub.gewinn_ende)}) lohnt sich der Mehrverdienst.`;
     if (e.zuv_modus === "stunden") {
       const h1 = stundenFuerUmsatz(ub.umsatz_grenze, e), h2 = stundenFuerUmsatz(ub.umsatz_ende, e);
       if (h1 !== null) t += ` Entspricht ca. ${zk(h1, 1)} bis ${zk(h2, 1)} Std/Woche.`;
     }
     w.push(["rot", t]);
-  } else if (!s.pflicht && ub && g > ub.gewinn_grenze * 0.85) {
-    w.push(["orange", `Hinweis: Der Gewinn (${fmt(g)}) liegt knapp unter der ${grenzname} (${fmt(ub.gewinn_grenze)}). Ein Überschreiten kostet rückwirkend Beiträge für das ganze Jahr; sinnvoll erst ab Umsatz ${fmt(ub.umsatz_ende)}.`]);
+  } else if (ub && r.umsatz < ub.umsatz_grenze && g > ub.gewinn_grenze * 0.85) {
+    w.push(["orange", `Hinweis: Der Gewinn (${fmt(g)}) liegt knapp unter der ${gn} (${fmt(ub.gewinn_grenze)}). Ein Überschreiten kostet rückwirkend Beiträge für das ganze Jahr; sinnvoll erst ab Umsatz ${fmt(ub.umsatz_ende)}.`]);
   }
   if (s.pflicht && e.neugruender)
     w.push(["info", "Neugründer: KV-Beitragsgrundlage in den ersten beiden Kalenderjahren fix auf der Mindestbeitragsgrundlage (keine Nachbemessung) – ab Jahr 3 KV auf den tatsächlichen Gewinn."]);
@@ -673,13 +749,34 @@ function warnungen(r, e, p) {
     w.push(["orange", "Verlust aus dem Zuverdienst – wird mit der Pension ausgeglichen (Steuergutschrift max. bis 0)."]);
   return w;
 }
+function pensionWarnungen(r, e, p) {
+  const w = [], wk = r.wirkung, art = wk.art, name = PENSION_ARTEN[art] || art, gfg = p.gfg_monat, m = wk.monate;
+  if (wk.wegfall) {
+    const bis = wegfallGrenzen(e, p)[0];
+    w.push(["rot", `PENSION ENTFÄLLT: Bei der ${name} darf vor dem Regelpensionsalter nur bis zur Geringfügigkeitsgrenze (${fmt(gfg)}/Monat) dazuverdient werden, wenn eine Pflichtversicherung in der Pensionsversicherung entsteht. Ihr Erwerbseinkommen beträgt ca. ${fmt(wk.einkommen_monat)}/Monat – die Pension entfällt für ${m} Monat(e): −${fmt(r.pensionsverlust_brutto)} brutto bzw. −${fmt(r.pensionsverlust_netto)} netto im Jahr. Unschädlich ist ein Gewinn vor SVS bis ca. ${fmt(bis)} im Jahr.`]);
+    if (art === "korridor") w.push(["info", `Korridorpension: Für jeden Monat des Wegfalls erhöht sich die spätere Alterspension um ${zk(p.korridor_bonus)} % – hier ${m} × ${zk(p.korridor_bonus)} % = ${zk(m * p.korridor_bonus)} %.`]);
+    else if (art === "langzeit" || art === "schwerarbeit") w.push(["info", "Die Alterspension wird bei Erreichen des Regelpensionsalters neu berechnet; Monate des Wegfalls wegen Erwerbstätigkeit erhöhen sie."]);
+  } else if (WEGFALL_ARTEN.includes(art) && wk.einkommen_monat > gfg * 0.85) {
+    w.push(["orange", `Achtung ${name}: Ihr Erwerbseinkommen (ca. ${fmt(wk.einkommen_monat)}/Monat) liegt nahe der Geringfügigkeitsgrenze (${fmt(gfg)}/Monat). Darüber – mit Pflichtversicherung in der Pensionsversicherung – entfällt die Pension.`]);
+  }
+  if (art === "teilpension") w.push(["info", "Teilpension (seit 2026): setzt eine vereinbarte Arbeitszeitreduktion in einem Dienstverhältnis voraus. Eine selbständige Tätigkeit über der Geringfügigkeitsgrenze mit Pflichtversicherung lässt sie vor dem Regelpensionsalter entfallen – bitte bei PVA/SVS klären."]);
+  if (WEGFALL_ARTEN.includes(art)) w.push(["info", `Annahme: Erwerbseinkommen pro Monat = Gewinn vor SVS ÷ ${m} Tätigkeitsmonat(e); Toleranz bis ${zk(p.wegfall_toleranz, 0)} % der Geringfügigkeitsgrenze pro Jahr. Die genaue Prüfung macht die Pensionsversicherung.`]);
+  if (art === "invaliditaet") {
+    if (wk.anrechnung) w.push(["orange", `TEILPENSION: Erwerbseinkommen ca. ${fmt(wk.einkommen_monat)}/Monat über der Geringfügigkeitsgrenze, Gesamteinkommen ${fmt(wk.gesamteinkommen)}/Monat. Die Pension wird um ${fmt(wk.anrechnung)}/Monat gekürzt (${m} Monate, 13./14. anteilig): −${fmt(r.pensionsverlust_brutto)} brutto bzw. −${fmt(r.pensionsverlust_netto)} netto im Jahr.`]);
+    else if (wk.einkommen_monat > gfg) w.push(["info", `Gesamteinkommen ${fmt(wk.gesamteinkommen)}/Monat bis ${fmt(p.inv_grenze_1)} – keine Kürzung der Pension.`]);
+    w.push(["info", "Annahme Teilpension: Steigerungsbetrag = Bruttopension (ohne Zuschläge). Der Prozentsatz wird bei Pensionsanpassung, neuer Erwerbstätigkeit oder auf Antrag neu festgestellt."]);
+  }
+  if (art === "witwe") w.push(["info", "Witwen-/Witwerpension: Der Zuverdienst führt nicht zum Wegfall. Eigenes Einkommen kann aber bei einer Neubemessung die Höhe der Hinterbliebenenpension beeinflussen – nicht berechnet."]);
+  if (art === "regulaer" && r.svs.pflicht) w.push(["info", "Besonderer Höherversicherungsbetrag: Ihre PV-Beiträge erhöhen die Pension ab dem Kalenderjahr nach Aufnahme der Tätigkeit."]);
+  return w;
+}
 function tabelle(e, p, werte, modusStunden) {
   const pension = pensionAus(e, p), ub = unguenstigerBereich(e, p, pension);
   const zeilen = werte.map(x => {
     const u = modusStunden ? e.stundensatz * x * e.wochen : x;
     const r = berechneMitUmsatz(u, e, p, pension);
     r.x = x;
-    r.status = r.svs.befreit ? "befreit" : !r.svs.pflicht ? "unter Grenze" : (ub && u < ub.umsatz_ende) ? "ungünstig"
+    r.status = r.wirkung.wegfall ? "Pension entfällt" : r.wirkung.anrechnung ? "Teilpension" : r.svs.befreit ? "befreit" : !r.svs.pflicht ? "unter Grenze" : (ub && u < ub.umsatz_ende) ? "ungünstig"
       : r.svs.mindest ? "Mindestbeitrag" : "OK";
     return r;
   });
@@ -727,6 +824,8 @@ function plausibilitaet(p) {
     if (!(p[k] >= 0 && p[k] <= 100)) m.push(["rot", `Prozentwert „${DEF[k].label}“ = ${zt(p[k])} liegt außerhalb von 0–100 %.`]);
   for (const [v, b, n] of [["pab_von","pab_bis","Pensionistenabsetzbetrag"],["pab_erh_von","pab_erh_bis","erhöhter Pensionistenabsetzbetrag"],["vfb_grenze","vfb_ende","Veranlagungsfreibetrag"]])
     if (p[v] >= p[b]) m.push(["rot", `${n}: Einschleif-Untergrenze ist nicht kleiner als die Obergrenze.`]);
+  if (!(p.inv_grenze_1 < p.inv_grenze_2 && p.inv_grenze_2 < p.inv_grenze_3)) m.push(["rot", "Teilpension (Invaliditätspension): Die Gesamteinkommens-Stufen sind nicht aufsteigend."]);
+  if (Math.abs(p.gfg_monat * 12 - p.svs_grenze) > 0.05) m.push(["gelb", `Die Versicherungsgrenze entspricht üblicherweise 12 × Geringfügigkeitsgrenze (${zk(p.gfg_monat * 12)} €).`]);
   if (!(p.pension_anzahl >= 12 && p.pension_anzahl <= 14)) m.push(["gelb", "Anzahl der Pensionsbezüge ist nicht 12–14."]);
   if (p.svs_mbgl >= p.svs_hbgl) m.push(["rot", "SVS: Mindestbeitragsgrundlage ist nicht kleiner als die Höchstbeitragsgrundlage."]);
   if (Math.abs(p.svs_grenze - p.svs_mbgl) > 0.01) m.push(["gelb", "Versicherungsgrenze und Mindestbeitragsgrundlage sind üblicherweise gleich hoch (beide = 12 × Geringfügigkeitsgrenze)."]);
@@ -783,7 +882,7 @@ const REGELN = {
   pab_erh: [KW_PAB_ERH,"betrag",.12,600], pab_erh_von: [KW_PAB_ERH,"betrag",.12,600], pab_erh_bis: [KW_PAB_ERH,"betrag",.12,600],
   pension_kv: ["Krankenversicherung\\w*[^.\\n]{0,80}Pensionist\\w*|Pensionist\\w*[^.\\n]{0,80}Krankenversicherung\\w*","prozent",[4,8],150],
   sz_freibetrag: ["Sonderzahlung\\w*|Jahressechstel","betrag",.1,300], sz_freigrenze: ["Sonderzahlung\\w*|Jahressechstel","betrag",.1,300],
-  svs_grenze: ["Versicherungsgrenze","betrag",.12,150], svs_mbgl: ["Mindestbeitragsgrundlage|\\bMBG\\b","betrag",.12,150],
+  svs_grenze: ["Versicherungsgrenze","betrag",.12,150], gfg_monat: ["Geringfügigkeitsgrenze","betrag",.12,150],svs_mbgl: ["Mindestbeitragsgrundlage|\\bMBG\\b","betrag",.12,150],
   svs_hbgl: ["Höchstbeitragsgrundlage|\\bHBG\\b","betrag",.12,150], svs_kv: ["Krankenversicherung","prozent",[5,9],300],
   svs_pv: ["Pensionsversicherung","prozent",[15,23],300], svs_sv: ["Selbst?ständigenvorsorge","prozent",[.8,3],200],
   svs_uv: ["Unfallversicherung","betrag",.15,200], gsvg_ku_gewinn: ["Kleinunternehmer\\w*","betrag",.12,300],
@@ -981,9 +1080,9 @@ function historieEintrag(anlass) {
 /* =====================================================================
    Oberfläche – Eingaben
    ===================================================================== */
-const ZAHLFELDER = ["pension_betrag","stundensatz","std_woche","wochen","umsatz_jahr","umsatz_monat","gewinn_jahr","ba_betrag","ba_prozent","zus_ausgaben"];
+const ZAHLFELDER = ["taetigkeitsmonate", "pension_betrag","stundensatz","std_woche","wochen","umsatz_jahr","umsatz_monat","gewinn_jahr","ba_betrag","ba_prozent","zus_ausgaben"];
 const CHECKS = ["erh_pab","gsvg_befreiung","neugruender","svs_uv_an","svs_sv_an","hbgl_mehrfach","vfb_an"];
-const SELECTS = ["pension_modus","zuv_modus","ba_modus"];
+const SELECTS = ["pension_art","pension_modus","zuv_modus","ba_modus"];
 function eingabenSetzen(e) {
   for (const k of ZAHLFELDER) { $(k).value = zahlText(e[k]); $(k).classList.remove("fehler"); }
   for (const k of CHECKS) $(k).checked = !!e[k];
@@ -1082,8 +1181,13 @@ function berichtZeilen(r, e, p) {
   z("= Einkommensteuer gesamt (lfd.)", fmt(r.est_gesamt));
   z("– bereits einbehaltene Lohnsteuer Pension", fmt(pen.lst_lfd), "", "Diese Steuer zieht die Pensionsversicherung schon monatlich ab.");
   z("= Mehrsteuer durch Zuverdienst", fmt(r.mehrsteuer), r.mehrsteuer > 0 ? "Nachzahlung bei Veranlagung" : "", "Wird mit dem Einkommensteuerbescheid nachgezahlt. Tipp: monatlich zurücklegen; das Finanzamt setzt später auch Vorauszahlungen fest.", "fett");
-  h("Netto Zuverdienst");
-  z("Netto pro Jahr", fmt(r.netto_zuv), "", "Gewinn vor SVS − SVS − Mehrsteuer" + (r.kammer_bar ? " − Grundumlage" : "") + ".", "gross");
+  const verlust = r.pensionsverlust_netto > 0.005;
+  h("Netto Zuverdienst" + (verlust ? " (nach Pensionsverlust)" : ""));
+  if (verlust) {
+    z("Gewinn − SVS − Mehrsteuer", fmt(r.netto_zuv + r.pensionsverlust_netto), "", "Was der Zuverdienst selbst netto bringt – vor dem Verlust bei der Pension.");
+    z("– Pensionsverlust netto", fmt(r.pensionsverlust_netto), "", "Weniger Nettopension, weil die Pension wegen des Zuverdienstes entfällt bzw. gekürzt wird.", "fett");
+  }
+  z("Netto pro Jahr", fmt(r.netto_zuv), "", "Netto-Effekt des Zuverdienstes: Gewinn vor SVS − SVS − Mehrsteuer" + (r.kammer_bar ? " − Grundumlage" : "") + (verlust ? " − Pensionsverlust" : "") + ". So viel mehr haben Sie im Jahr als ohne Zuverdienst.", "gross");
   z("Netto pro Monat (÷ 12)", fmt(r.netto_zuv_monat), "", "", "gross");
   z("Nettoanteil vom Umsatz", fmtP(r.anteil_umsatz), "", "So viel Prozent des Umsatzes bleiben Ihnen tatsächlich.", "fett");
   z("Nettoanteil vom Gewinn vor SVS", fmtP(r.anteil_gewinn));
@@ -1102,7 +1206,16 @@ function berichtZeilen(r, e, p) {
     }
   }
   h("Pension");
+  const wk = r.wirkung, voll = r.pension_voll;
+  z("Pensionsart", PENSION_ARTEN[wk.art] || wk.art, "", "Die Pensionsart bestimmt, ob und wie der Zuverdienst die Pension verringert.");
   z("Brutto pro Monat", fmt(pen.monat), `× ${zahlText(p.pension_anzahl)}`);
+  if (wk.wegfall) {
+    z("Brutto pro Jahr ohne Zuverdienst", fmt(voll.brutto));
+    z(`– Wegfall für ${wk.wegfall} Monat(e)`, fmt(r.pensionsverlust_brutto), "", "Die Pension ruht in den Monaten mit Erwerbseinkommen über der Geringfügigkeitsgrenze (13./14. Pension anteilig).", "fett");
+  } else if (wk.anrechnung) {
+    z("Brutto pro Jahr ohne Zuverdienst", fmt(voll.brutto));
+    z(`– Teilpension: ${fmt(wk.anrechnung)} × ${wk.monate} Mon.`, fmt(r.pensionsverlust_brutto), "", "Anrechnungsbetrag: 30/40/50 % der Gesamteinkommensteile über den Grenzen, höchstens das Erwerbseinkommen und höchstens 50 % der Pension. 13./14. Pension anteilig.", "fett");
+  }
   z("Brutto pro Jahr", fmt(pen.brutto));
   z(`– KV Pension ${fmtP(p.pension_kv)}`, fmt(pen.kv));
   z("– Lohnsteuer laufend", fmt(pen.lst_lfd));
@@ -1112,19 +1225,20 @@ function berichtZeilen(r, e, p) {
   h("Gesamt (Pension + Zuverdienst)");
   z("Gesamt netto pro Jahr", fmt(r.netto_gesamt), "", "", "gross");
   z("Gesamt netto pro Monat (÷ 12)", fmt(r.netto_gesamt_monat), "", "Jahresnetto inkl. 13./14. Pension, gleichmäßig auf 12 Monate verteilt.", "gross");
-  z("Zum Vergleich: nur Pension netto / Monat (÷ 12)", fmt(pen.netto / 12));
+  z("Zum Vergleich: nur Pension netto / Monat (÷ 12)", fmt(r.pension_voll.netto / 12), "", "Nettopension ohne Zuverdienst (volle Pension), gleichmäßig auf 12 Monate verteilt.");
   return L;
 }
 function ergebnisAnzeigen(r, e, p) {
-  const pen = r.pension, s = r.svs;
+  const pen = r.pension_voll, s = r.svs;
   $("ergTitel").textContent = `Ergebnis ${zustand.einst.param_jahr}`;
-  $("ergArt").textContent = e.gewerbe ? "Gewerbetreibender (GSVG)" + (s.befreit ? " – KV/PV befreit" : "")
-    : "Neuer Selbständiger" + (s.pflicht ? "" : " – unter Versicherungsgrenze");
+  $("ergArt").textContent = (e.gewerbe ? "Gewerbetreibender (GSVG)" + (s.befreit ? " – KV/PV befreit" : "")
+    : "Neuer Selbständiger" + (s.pflicht ? "" : " – unter Versicherungsgrenze"))
+    + (r.wirkung.wegfall ? " · PENSION ENTFÄLLT" : r.wirkung.anrechnung ? " · Teilpension" : "");
   $("pensionInfo").textContent = e.pension_modus === "netto_monat" ? `→ Brutto rückgerechnet: ${fmt(pen.monat)} / Monat`
     : e.pension_modus === "brutto_jahr" ? `→ Brutto pro Monat: ${fmt(pen.monat)}` : `→ Netto laufend: ${fmt(pen.netto_monat_lfd)} / Monat`;
   const ungue = r.warnungen.some(w => w[1].startsWith("UNGÜNSTIG"));
   $("tiles").innerHTML = `
-    <div class="tile haupt" data-tip="Was vom Zuverdienst pro Monat netto bleibt (Jahr ÷ 12)."><div class="k">Netto-Zuverdienst / Monat</div><div class="v">${fmt(r.netto_zuv_monat)}</div><div class="s">${fmt(r.netto_zuv)} pro Jahr</div></div>
+    <div class="tile haupt" data-tip="Was der Zuverdienst pro Monat netto bringt (Jahr ÷ 12) – nach SVS, Mehrsteuer und ggf. Pensionsverlust." style="${r.netto_zuv < 0 ? "border-color:var(--bad)" : ""}"><div class="k">Netto-Zuverdienst / Monat</div><div class="v" style="${r.netto_zuv < 0 ? "color:var(--bad)" : ""}">${fmt(r.netto_zuv_monat)}</div><div class="s">${fmt(r.netto_zuv)} pro Jahr${r.pensionsverlust_netto > 0.005 ? ` · inkl. Pensionsverlust ${fmt(r.pensionsverlust_netto, 0)}` : ""}</div></div>
     <div class="tile" data-tip="So viel Prozent des Umsatzes bleiben netto."><div class="k">Nettoanteil vom Umsatz</div><div class="v" style="color:${ungue ? "var(--bad)" : "inherit"}">${fmtP(r.anteil_umsatz)}</div><div class="s">Umsatz ${fmt(r.umsatz, 0)}</div></div>
     <div class="tile" data-tip="SVS-Beiträge und Mehrsteuer durch den Zuverdienst."><div class="k">SVS + Mehrsteuer / Jahr</div><div class="v">${fmt(s.summe + r.mehrsteuer, 0)}</div><div class="s">SVS ${fmt(s.summe, 0)} · ESt ${fmt(r.mehrsteuer, 0)}</div></div>
     <div class="tile" data-tip="Pension netto + Zuverdienst netto, gleichmäßig auf 12 Monate verteilt."><div class="k">Gesamt netto / Monat</div><div class="v">${fmt(r.netto_gesamt_monat)}</div><div class="s">nur Pension: ${fmt(pen.netto / 12)}</div></div>`;
@@ -1164,10 +1278,11 @@ function tabelleAnzeigen() {
   const kopf = [["x", stunden ? "Std/Woche" : "Umsatz", "Variierter Wert: Stunden pro Woche bzw. Jahresumsatz."], ["u","Umsatz","Jahresumsatz ohne Umsatzsteuer."],
     ["g","Gewinn v. SVS","Umsatz minus Betriebsausgaben, vor SVS-Beiträgen."], ["s","SVS","SVS-Beiträge gesamt pro Jahr (KV, PV, Vorsorge, Unfall)."],
     ["f","Grundfreib.","Grundfreibetrag: 15 % des Gewinns steuerfrei (max. 4.950 €)."], ["m","Mehr-ESt","Zusätzliche Einkommensteuer durch den Zuverdienst."],
-    ["n","Netto/Jahr","Was vom Zuverdienst im Jahr netto bleibt."], ["nm","Netto/Monat","Netto-Zuverdienst ÷ 12."], ["a","Netto % Ums.","Netto in Prozent vom Umsatz."],
+    ["n","Netto/Jahr","Netto-Effekt des Zuverdienstes pro Jahr – nach SVS, Mehrsteuer und ggf. Pensionsverlust."], ["nm","Netto/Monat","Netto-Zuverdienst ÷ 12."], ["a","Netto % Ums.","Netto in Prozent vom Umsatz."],
     ["ge","Gesamt netto/Mon.","Pension netto + Zuverdienst netto, pro Monat (÷ 12)."],
-    ["st","Status","unter Grenze / befreit = keine KV/PV · ungünstig = weniger netto als knapp unter der Grenze · Mindestbeitrag = Gewinn unter der Mindestbeitragsgrundlage · OK = lohnend"]];
-  const klasse = {"unter Grenze": "s-unter", befreit: "s-befreit", "ungünstig": "s-unguenstig", Mindestbeitrag: "s-mindest", OK: "s-ok"};
+    ["st","Status","unter Grenze / befreit = keine KV/PV · ungünstig = weniger netto als knapp unter der Grenze · Mindestbeitrag = Gewinn unter der Mindestbeitragsgrundlage · OK = lohnend · Pension entfällt / Teilpension = der Zuverdienst kostet Pension (je nach Pensionsart)"]];
+  const klasse = {"unter Grenze": "s-unter", befreit: "s-befreit", "ungünstig": "s-unguenstig", Mindestbeitrag: "s-mindest", OK: "s-ok",
+    "Pension entfällt": "s-pension", Teilpension: "s-pension"};
   $("datentabelle").innerHTML = `<thead><tr>${kopf.map(k => `<th data-tip="${esc(k[2])}">${esc(k[1])}</th>`).join("")}</tr></thead><tbody>` +
     tabDaten.zeilen.map(r => `<tr class="${klasse[r.status]}"><td>${stunden ? zahlText(r.x) : zk(r.x, 0)}</td><td>${zk(r.umsatz, 0)}</td><td>${zk(r.gewinn_vor_sv, 0)}</td><td>${zk(r.svs.summe, 0)}</td><td>${zk(r.gfb, 0)}</td><td>${zk(r.mehrsteuer, 0)}</td><td>${zk(r.netto_zuv, 0)}</td><td>${zk(r.netto_zuv_monat, 0)}</td><td>${zk(r.anteil_umsatz, 1)}</td><td>${zk(r.netto_gesamt / 12, 0)}</td><td class="st">${r.status}</td></tr>`).join("") + "</tbody>";
   diagramm(stunden);
@@ -1231,6 +1346,11 @@ const PARAM_TIPPS = {
   ba_basis: "Basispauschalierung: Betriebsausgaben in % vom Umsatz (ab 2026: 15 %; manche Tätigkeiten niedriger).",
   ba_ku_dl: "Kleinunternehmerpauschalierung für Dienstleistungsbetriebe.", ba_ku_sonst: "Kleinunternehmerpauschalierung für alle anderen Betriebe.",
   ku_grenze: "Umsatzgrenze für die USt-Befreiung und die Kleinunternehmerpauschalierung.",
+  gfg_monat: "Geringfügigkeitsgrenze pro Monat. Zuverdienstgrenze für vorzeitige Pensionen und Invaliditäts-/BU-Pension (2026: 551,10 €).",
+  wegfall_toleranz: "Vorzeitige Pensionen: Die Pension fällt erst weg, wenn die Überschreitungen im Jahr zusammen mehr als dieser Prozentsatz der Geringfügigkeitsgrenze sind (laut AK 40 %). 0 = keine Toleranz.",
+  korridor_bonus: "Erhöhung der späteren Alterspension je Monat, in dem die Korridorpension wegen Erwerbstätigkeit weggefallen ist.",
+  inv_grenze_1: "Teilpension: Ab diesem monatlichen Gesamteinkommen (Pension + Erwerbseinkommen) wird angerechnet.",
+  inv_max: "Der Anrechnungsbetrag ist höchstens dieser Prozentsatz der Pension (Steigerungsbetrag).",
 };
 function paramAufbauen() {
   const gruppen = {};
@@ -1445,7 +1565,7 @@ function hilfeAufbauen() {
   const S = [
     ["h-start", "Kurzanleitung", `<p>Der Rechner zeigt, wie viel von einem selbständigen Zuverdienst neben einer regulären Alterspension netto übrig bleibt – nach Sozialversicherung (SVS) und Einkommensteuer. Bei der regulären Alterspension (ab dem Regelpensionsalter) darf unbegrenzt dazuverdient werden; die Pension wird nicht gekürzt.</p>
       <p class="box">Fahren Sie mit der Maus über ein Eingabefeld, eine Ergebniszeile oder eine Tabellenüberschrift – nach einem Moment erscheint eine Hilfeblase. Am Handy: lange auf die Zeile tippen.</p>
-      <ol><li>Tätigkeit wählen: „Neuer Selbständiger“ (ohne Gewerbeschein) oder „Gewerbetreibender“ (mit Gewerbeschein).</li><li>Pension eintragen (brutto pro Monat, pro Jahr oder netto pro Monat).</li><li>Zuverdienst eintragen – z. B. Stundensatz, Stunden pro Woche und Arbeitswochen.</li><li>Betriebsausgaben wählen (tatsächliche Ausgaben oder Pauschale).</li><li>Ergebnis rechts ablesen, rote Hinweise beachten. Im Reiter „Tabelle &amp; Diagramm“ sehen Sie, wie sich mehr oder weniger Stunden auswirken.</li></ol>
+      <ol><li>Tätigkeit wählen: „Neuer Selbständiger“ (ohne Gewerbeschein) oder „Gewerbetreibender“ (mit Gewerbeschein).</li><li>Pensionsart wählen und die Pension eintragen (brutto pro Monat, pro Jahr oder netto pro Monat). Achtung: Bei vorzeitigen Pensionen kann der Zuverdienst die ganze Pension kosten.</li><li>Zuverdienst eintragen – z. B. Stundensatz, Stunden pro Woche und Arbeitswochen.</li><li>Betriebsausgaben wählen (tatsächliche Ausgaben oder Pauschale).</li><li>Ergebnis rechts ablesen, rote Hinweise beachten. Im Reiter „Tabelle &amp; Diagramm“ sehen Sie, wie sich mehr oder weniger Stunden auswirken.</li></ol>
       <p>Die Berechnung aktualisiert sich bei jeder Eingabe. Die Beispielwerte beim ersten Öffnen sind nur ein Muster.</p>`],
     ["h-gewerbe", "Gewerbeschein – ja oder nein?", `<p>Entscheidend ist, ob die Tätigkeit unter die Gewerbeordnung fällt.</p>
       <p><b>Kein Gewerbeschein → „Neuer Selbständiger“:</b> Vortragende, Lehrende, Trainer in der Erwachsenenbildung · Schriftsteller, Journalisten, Übersetzer, Künstler · wissenschaftliche Tätigkeit, Gutachter · freie Gesundheitsberufe.</p>
@@ -1455,6 +1575,16 @@ function hilfeAufbauen() {
     ["h-unterschied", "Unterschied in der Berechnung", `<p><b>Neuer Selbständiger:</b> Versicherungspflicht erst, wenn der Jahresgewinn (vor SVS) 6.613,20 € übersteigt – darunter keine Beiträge, auch keine Unfallversicherung. Darüber Beiträge auf den GESAMTEN Gewinn. Keine Kammermitgliedschaft.</p>
       <p><b>Gewerbetreibender:</b> pflichtversichert ab dem Gewerbeschein. Pensionisten können die Befreiung von Kranken- und Pensionsversicherung beantragen (Kleinunternehmer-Ausnahme), wenn Umsatz ≤ 55.000 € und Gewinn ≤ 6.613,20 €. Wird eine Grenze überschritten, fällt die Befreiung rückwirkend für das ganze Jahr weg. Ohne Befreiung: Mindestbeiträge auch bei kleinem Gewinn (rund 160 € pro Monat). Unfallversicherung (12,95 €/Monat) immer. WKO-Grundumlage (ca. 100–400 €/Jahr, unter „Parameter“ einstellen) – bei tatsächlichen Ausgaben absetzbar, bei Pauschalierung abgegolten.</p>
       <p><b>Neugründer:</b> In den ersten beiden Kalenderjahren wird die KV-Beitragsgrundlage nicht nachbemessen (fix auf der Mindestbeitragsgrundlage). Ob Sie als Neugründer gelten, bestätigt die SVS.</p>`],
+    ["h-pensionsart", "Pensionsart – wie viel darf ich dazuverdienen?", `<p>Die Geringfügigkeitsgrenze 2026 beträgt <b>551,10 € pro Monat</b>. Erwerbseinkommen aus selbständiger Tätigkeit = Gewinn vor SVS ÷ Tätigkeitsmonate (Feld „Tätigkeitsmonate im Jahr“, Standard 12).</p>
+      <ul><li><b>Reguläre Alterspension</b> (ab Regelpensionsalter): Zuverdienst unbegrenzt, die Pension wird nicht gekürzt. Bei Pflichtversicherung in der Pensionsversicherung gibt es ab dem Folgejahr einen besonderen Höherversicherungsbetrag.</li>
+      <li><b>Korridorpension:</b> Liegt das Erwerbseinkommen über der Geringfügigkeitsgrenze UND entsteht eine Pflichtversicherung in der Pensionsversicherung, <b>entfällt die Pension</b> für diese Monate (inkl. anteiliger 13./14.). Dafür erhöht sich die spätere Alterspension um 0,55 % je Wegfallmonat.</li>
+      <li><b>Langzeitversicherte („Hacklerregelung“) und Schwerarbeitspension:</b> gleiche Regel – Wegfall; die Alterspension wird bei Erreichen des Regelpensionsalters neu berechnet.</li>
+      <li><b>Teilpension (seit 2026):</b> setzt eine vereinbarte Arbeitszeitreduktion in einem Dienstverhältnis voraus. Eine selbständige Tätigkeit über der Grenze mit Pflichtversicherung lässt sie vor dem Regelpensionsalter entfallen.</li>
+      <li><b>Invaliditäts-, Berufsunfähigkeits-, Erwerbsunfähigkeitspension:</b> bis zur Geringfügigkeitsgrenze keine Änderung. Darüber, wenn das Gesamteinkommen (Bruttopension + Erwerbseinkommen) 1.599,99 €/Monat übersteigt, gebührt nur eine <b>Teilpension</b>: Abzug von 30 % der Einkommensteile über 1.599,99 € bis 2.400,09 €, 40 % bis 3.199,99 € und 50 % darüber – höchstens das Erwerbseinkommen und höchstens 50 % der Pension (Annahme: Steigerungsbetrag = Bruttopension).</li>
+      <li><b>Witwen-/Witwerpension:</b> kein Wegfall durch Zuverdienst. Eigenes Einkommen kann bei einer Neubemessung die Höhe beeinflussen – nicht berechnet.</li></ul>
+      <p><b>Toleranz</b> bei vorzeitigen Pensionen: Laut Arbeiterkammer fällt die Pension erst weg, wenn die Überschreitungen im Kalenderjahr zusammen mehr als 40 % der monatlichen Grenze ausmachen (2026: 220,44 €). Der Rechner berücksichtigt das (Parameter); ob es in Ihrem Fall gilt, bestätigt die Pensionsversicherung.</p>
+      <p class="box">Neue Selbständige sind erst über 6.613,20 € Gewinn im Jahr pflichtversichert – darunter bleibt auch eine vorzeitige Pension erhalten. Gewerbe mit beantragter KV/PV-Befreiung: ebenfalls keine PV-Pflicht. Gewerbe OHNE Befreiung: PV-Pflicht ab dem ersten Euro – dann zählt allein die Einkommensgrenze.</p>
+      <p>„Netto pro Jahr“ zeigt den <b>Netto-Effekt</b>: was Sie insgesamt mehr haben als ohne Zuverdienst – nach SVS, Mehrsteuer UND Pensionsverlust. Bei vorzeitigen Pensionen kann er stark negativ sein; der rote „ungünstige Bereich“ zeigt dann, ab welchem Umsatz sich das Arbeiten trotz Pensionswegfall lohnt.</p>`],
     ["h-pension", "Pension", `<ul><li>Brutto pro Monat (14× jährlich): Betrag laut Pensionsbescheid; 13./14. Pension werden automatisch berücksichtigt.</li><li>Brutto pro Jahr: Jahressumme aller 14 Bezüge.</li><li>Netto pro Monat: laufende Auszahlung – das Brutto wird zurückgerechnet.</li><li>Erhöhter Pensionistenabsetzbetrag: nur bei Ehe/Partnerschaft, Partner-Einkünfte höchstens 2.720 €/Jahr, kein Alleinverdienerabsetzbetrag.</li></ul>
       <p>Von der Pension werden KV (Standard 6 %) und Lohnsteuer abgezogen. Die 13./14. Pension wird nach Abzug der KV mit 6 % besteuert (Freibetrag 620 €, steuerfrei bis 2.100 €).</p>`],
     ["h-zuverdienst", "Zuverdienst und Umsatzsteuer", `<p>Eingabe als Stundensatz × Stunden × Wochen, als Jahres- oder Monatsumsatz oder direkt als Gewinn vor SVS. Typisch sind 44–48 Arbeitswochen.</p>
