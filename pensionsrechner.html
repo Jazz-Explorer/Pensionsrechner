@@ -55,6 +55,13 @@ header.top .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto 
 .banner .txt { flex: 1 1 320px; min-width: 0 }
 .banner .txt div + div { font-weight: 500 }
 
+.werteleiste { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 12px; border-radius: var(--r);
+  background: var(--info-bg); margin-bottom: 12px }
+.werteleiste.neu { background: var(--warn-bg) }
+.wl-text { flex: 1 1 320px; min-width: 0; font-size: .85rem; color: var(--info); white-space: pre-line }
+.werteleiste.neu .wl-text { color: var(--warn); font-weight: 600 }
+button.btn.umschalter { min-width: 230px }
+button.btn.umschalter.neu { background: var(--warn); color: var(--surface); border-color: var(--warn) }
 nav.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-bottom: 16px }
 nav.tabs button { appearance: none; border: 0; background: none; font: inherit; font-weight: 600; color: var(--muted);
   padding: 10px 14px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap }
@@ -207,6 +214,17 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
       <span class="chip" id="chipSpeicher" data-tip="">lokal gespeichert</span>
     </div>
   </header>
+
+  <div class="werteleiste" id="werteleiste">
+    <button class="btn primary" type="button" id="btnErmitteln" data-tip="Holt die aktuellen Rechenwerte aus allen Quellen (WKO, BMF-nahe Seiten …). Neue Werte werden als ENTWURF vorbelegt – gespeichert wird erst mit „Neue Werte speichern“.">🔍 Aktuelle Werte ermitteln</button>
+    <div class="wl-text" id="wlText"></div>
+    <div class="btns" id="wlKnoepfe" hidden>
+      <button class="btn umschalter" type="button" id="btnUmschalten" data-tip="Schaltet die gesamte Berechnung zwischen den gespeicherten (alten) und den gefundenen (neuen) Werten um – zum direkten Vergleich."></button>
+      <button class="btn primary" type="button" id="btnEntwurfSpeichern" data-tip="Übernimmt die neuen Werte dauerhaft. Die bisherigen Werte werden vorher automatisch in der Historie gesichert.">💾 Neue Werte speichern</button>
+      <button class="btn" type="button" id="btnEntwurfAuswahl" data-tip="Zeigt jeden gefundenen Wert mit Fundstelle. Hier wählen Sie, welche Werte in den Entwurf übernommen werden.">Auswahl…</button>
+      <button class="btn" type="button" id="btnEntwurfVerwerfen" data-tip="Löscht den Entwurf. Die gespeicherten Werte bleiben unverändert.">Verwerfen</button>
+    </div>
+  </div>
 
   <div class="banner" id="banner" hidden>
     <div class="txt" id="bannerTxt"></div>
@@ -1134,9 +1152,9 @@ function eingabeGeaendert() {
    ===================================================================== */
 function rechnen() {
   let r;
-  try { r = berechne(zustand.e, zustand.p); } catch (x) { zeigeToast("Berechnungsfehler: " + x.message); return; }
+  try { r = berechne(zustand.e, pCalc()); } catch (x) { zeigeToast("Berechnungsfehler: " + x.message); return; }
   zustand.ergebnis = r;
-  ergebnisAnzeigen(r, zustand.e, zustand.p);
+  ergebnisAnzeigen(r, zustand.e, pCalc()); leisteAktualisieren();
   if (zustand.tab === "tabelle") tabelleAnzeigen();
 }
 function berichtZeilen(r, e, p) {
@@ -1242,13 +1260,13 @@ function ergebnisAnzeigen(r, e, p) {
     <div class="tile" data-tip="So viel Prozent des Umsatzes bleiben netto."><div class="k">Nettoanteil vom Umsatz</div><div class="v" style="color:${ungue ? "var(--bad)" : "inherit"}">${fmtP(r.anteil_umsatz)}</div><div class="s">Umsatz ${fmt(r.umsatz, 0)}</div></div>
     <div class="tile" data-tip="SVS-Beiträge und Mehrsteuer durch den Zuverdienst."><div class="k">SVS + Mehrsteuer / Jahr</div><div class="v">${fmt(s.summe + r.mehrsteuer, 0)}</div><div class="s">SVS ${fmt(s.summe, 0)} · ESt ${fmt(r.mehrsteuer, 0)}</div></div>
     <div class="tile" data-tip="Pension netto + Zuverdienst netto, gleichmäßig auf 12 Monate verteilt."><div class="k">Gesamt netto / Monat</div><div class="v">${fmt(r.netto_gesamt_monat)}</div><div class="s">nur Pension: ${fmt(pen.netto / 12)}</div></div>`;
-  $("warnungen").innerHTML = r.warnungen.filter(w => w[0] !== "info").map(w => `<div class="meldung ${w[0]}">⚠ ${esc(w[1])}</div>`).join("");
+  $("warnungen").innerHTML = (zustand.entwurf && zustand.entwurf.zeigeNeu ? `<div class="meldung orange">Anzeige mit den NEUEN Werten (Entwurf, noch nicht gespeichert) – „⇄“ in der Leiste oben schaltet auf die gespeicherten Werte zurück.</div>` : "") + r.warnungen.filter(w => w[0] !== "info").map(w => `<div class="meldung ${w[0]}">⚠ ${esc(w[1])}</div>`).join("");
   $("hinweise").innerHTML = r.warnungen.filter(w => w[0] === "info").map(w => `<div class="meldung info">ℹ ${esc(w[1])}</div>`).join("");
   $("bericht").innerHTML = berichtZeilen(r, e, p).map(z => z.h ? `<tr><th colspan="3">${esc(z.h)}</th></tr>`
     : `<tr class="${z.art}"${z.tip ? ` data-tip="${esc(z.tip)}"` : ""}><td>${esc(z.label)}</td><td class="w">${esc(z.wert)}</td><td class="x">${esc(z.extra)}</td></tr>`).join("");
 }
 function berichtText() {
-  const r = zustand.ergebnis, e = zustand.e, p = zustand.p;
+  const r = zustand.ergebnis, e = zustand.e, p = pCalc();
   let t = `Pensionsrechner Österreich – Bericht vom ${new Date().toLocaleString("de-AT")}\nWerte für ${zustand.einst.param_jahr} (${zustand.einst.param_quelle})\n${"=".repeat(70)}\n\n`;
   for (const [a, x] of r.warnungen) t += (a === "info" ? "Hinweis: " : "WARNUNG: ") + x + "\n";
   t += "\n";
@@ -1274,7 +1292,7 @@ function tabelleAnzeigen() {
   if (!(schritt > 0) || bis < von) return;
   const n = Math.min(Math.floor((bis - von) / schritt + 1e-9) + 1, 1000);
   const werte = Array.from({length: n}, (_, i) => Math.round((von + i * schritt) * 1e4) / 1e4);
-  tabDaten = tabelle(e, zustand.p, werte, stunden);
+  tabDaten = tabelle(e, pCalc(), werte, stunden);
   const kopf = [["x", stunden ? "Std/Woche" : "Umsatz", "Variierter Wert: Stunden pro Woche bzw. Jahresumsatz."], ["u","Umsatz","Jahresumsatz ohne Umsatzsteuer."],
     ["g","Gewinn v. SVS","Umsatz minus Betriebsausgaben, vor SVS-Beiträgen."], ["s","SVS","SVS-Beiträge gesamt pro Jahr (KV, PV, Vorsorge, Unfall)."],
     ["f","Grundfreib.","Grundfreibetrag: 15 % des Gewinns steuerfrei (max. 4.950 €)."], ["m","Mehr-ESt","Zusätzliche Einkommensteuer durch den Zuverdienst."],
@@ -1454,19 +1472,113 @@ function frage(titel, text, ja = "Ja", nein = "Abbrechen") {
 }
 async function ergebnisZeigen(zeilen, meta) {
   if (!zeilen.length) { await frage("Keine Werte gefunden", "Im Text wurden keine passenden Werte gefunden.\n\nTipp: Prüfen Sie, ob der ganze Seitentext kopiert wurde (Strg+A, Strg+C), oder tragen Sie die Werte im Reiter „Parameter“ ein.", "OK", "Schließen"); return; }
-  const abw = zeilen.filter(z => !z.gleich), jahrNeu = meta.jahr;
-  if (!abw.length && +jahrNeu === +zustand.einst.param_jahr) {
-    Object.assign(zustand.einst, {geprueft_am: heute(), erinnern_ab: ""}); await Store.set("einst", zustand.einst); pruefAnzeigen();
+  await entwurfSetzen(zeilen, meta);
+  if (zustand.entwurf) { tabWaehlen("berechnung"); window.scrollTo({top: 0, behavior: "smooth"}); }
+}
+
+/* ---------- Entwurf: aktuelle Werte ermitteln → alt/neu vergleichen → speichern ---------- */
+const pCalc = () => (zustand.entwurf && zustand.entwurf.zeigeNeu) ? zustand.entwurf.p : zustand.p;
+// Werte-Dienst: werte.json neben der Seite (GitHub Pages) bzw. direkt aus dem GitHub-Repository
+const WERTE_DIENST = ["werte.json", "https://raw.githubusercontent.com/Jazz-Explorer/Pensionsrechner/main/werte.json"];
+let ermittelnLaeuft = false, ermittelText = "";
+function leisteAktualisieren() {
+  const ew = zustand.entwurf, leiste = $("werteleiste");
+  if (!ew) {
+    leiste.classList.remove("neu"); $("wlKnoepfe").hidden = true;
+    const e = zustand.einst;
+    $("wlText").textContent = ermittelText || `Verwendet: gespeicherte Werte für ${e.param_jahr} (${e.param_quelle || "–"}, geprüft ${datumDe(e.geprueft_am || e.param_stand)})`;
+    return;
   }
-  const info = `Quelle: ${meta.quelle} · gesucht für Jahr ${jahrNeu}\nWICHTIG: Automatisch ermittelte Werte sind Vorschläge – bitte die Fundstelle prüfen.`;
-  const res = await vergleich("Gefundene Werte – prüfen und übernehmen", info, zeilen, +jahrNeu !== +zustand.einst.param_jahr ? jahrNeu : null);
+  const neu = ew.zeigeNeu, n = unterschiede(zustand.p, ew.p).length;
+  leiste.classList.toggle("neu", neu); $("wlKnoepfe").hidden = false;
+  const b = $("btnUmschalten");
+  b.textContent = neu ? "Anzeige: NEUE Werte  ⇄  alt" : "Anzeige: ALTE Werte  ⇄  neu";
+  b.classList.toggle("neu", neu); b.setAttribute("aria-pressed", neu ? "true" : "false");
+  let t = `ENTWURF (nicht gespeichert): ${n} neue Wert(e)${ew.jahr ? `, Werte-Jahr ${ew.jahr}` : ""} – ${ew.meta.quelle || ""}`;
+  try {
+    const ra = berechne(zustand.e, zustand.p), rn = berechne(zustand.e, ew.p);
+    t += `\nNetto-Zuverdienst/Jahr: alt ${fmt(ra.netto_zuv)} → neu ${fmt(rn.netto_zuv)} · Gesamt netto/Monat: alt ${fmt(ra.netto_gesamt_monat)} → neu ${fmt(rn.netto_gesamt_monat)}`;
+  } catch (x) { /* unbrauchbare Werte */ }
+  $("wlText").textContent = t;
+}
+async function werteErmitteln() {
+  if (ermittelnLaeuft) return;
+  ermittelnLaeuft = true; $("btnErmitteln").disabled = true; $("btnErmitteln").textContent = "Suche läuft …";
+  ermittelText = "Lade aktuelle Werte vom Werte-Dienst …"; leisteAktualisieren();
+  let daten = null, fehler = [];
+  for (const url of WERTE_DIENST) {
+    if (location.protocol === "file:" && !url.startsWith("http")) continue;
+    try {
+      const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {cache: "no-store"});
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json();
+      if (d && d.format === "pensionsrechner-werte" && d.werte) { daten = d; break; }
+      throw new Error("unbekanntes Format");
+    } catch (e) { fehler.push(`${url}: ${e.message || e}`); }
+  }
+  ermittelnLaeuft = false; $("btnErmitteln").disabled = false; $("btnErmitteln").textContent = "🔍 Aktuelle Werte ermitteln"; ermittelText = "";
+  if (!daten) {
+    leisteAktualisieren();
+    await frage("Werte-Dienst nicht erreichbar", "Die aktuellen Werte konnten hier nicht automatisch geladen werden.\n\nIn dieser Umgebung (z. B. als Datei geöffnet oder auf claude.ai) darf die Seite keine fremden Adressen abrufen. Auf der GitHub-Seite funktioniert der Knopf, sobald der Werte-Dienst eingerichtet ist.\n\nAlternative: Reiter „Werte prüfen“ → Quelle öffnen, Seitentext kopieren, einfügen und „Werte ermitteln“.", "Zur Text-Methode", "Schließen")
+      && tabWaehlen("werte");
+    return;
+  }
+  const zeilen = PARAMETER_DEF.filter(d => daten.werte[d[0]]).map(d => { const v = daten.werte[d[0]];
+    return zeile(d[0], zustand.p[d[0]], Number(v.wert), !!v.jahr_ok, v.kontext || "", v.quellen || []); });
+  const alter = Math.floor((Date.now() - Date.parse(daten.erstellt)) / 864e5);
+  const meta = {jahr: +daten.jahr, quelle: `Werte-Dienst (${(daten.quellen || []).length} Quellen, Stand ${datumDe((daten.erstellt || "").slice(0, 10))})`,
+    stand: (daten.erstellt || heute()).slice(0, 10), hinweis: (daten.fehler && daten.fehler.length ? "Nicht erreichbar: " + daten.fehler.join("; ") : "")
+      + (alter > 7 ? ` Achtung: Der Werte-Dienst-Stand ist ${alter} Tage alt.` : "")};
+  await entwurfSetzen(zeilen, meta);
+}
+async function entwurfSetzen(zeilen, meta, {zeigeNeu = true, still = false} = {}) {
+  if (!zeilen.length) { leisteAktualisieren(); if (!still) zeigeToast("Es wurden keine passenden Werte gefunden."); return; }
+  const neu = Object.fromEntries(zeilen.filter(z => z.an).map(z => [z.key, z.neu]));
+  const bestaetigt = zeilen.filter(z => z.jahr_ok).length;
+  const jahrWechsel = meta.jahr && +meta.jahr !== +zustand.einst.param_jahr && bestaetigt >= 0.6 * PARAMETER_DEF.length - 15;
+  if (!Object.keys(neu).length && !jahrWechsel) {
+    Object.assign(zustand.einst, {geprueft_am: heute(), erinnern_ab: ""}); await Store.set("einst", zustand.einst);
+    pruefAnzeigen(); leisteAktualisieren();
+    if (!still) {
+      const offen = zeilen.filter(z => !z.gleich && !z.jahr_ok).length;
+      await frage("Werte sind aktuell", `${zeilen.length} Werte gefunden – alle mit passender Jahresangabe stimmen mit Ihren gespeicherten Werten überein. Prüfdatum gespeichert.` +
+        (offen ? `\n\n${offen} abweichende Wert(e) ohne Jahresangabe sehen Sie unter „Auswahl“ beim nächsten Entwurf oder im Reiter „Werte prüfen“.` : "") +
+        (meta.hinweis ? `\n\n${meta.hinweis}` : ""), "OK", "Schließen");
+    }
+    return;
+  }
+  zustand.entwurf = {p: {...zustand.p, ...neu}, zeilen, meta, zeigeNeu, jahr: jahrWechsel ? +meta.jahr : null};
+  rechnen();
+  zeigeToast(`Entwurf mit ${Object.keys(neu).length} neuen Wert(en) – mit „⇄“ vergleichen, dann speichern.`);
+}
+function entwurfUmschalten() { if (!zustand.entwurf) return; zustand.entwurf.zeigeNeu = !zustand.entwurf.zeigeNeu; rechnen(); }
+async function entwurfSpeichern() {
+  const ew = zustand.entwurf; if (!ew) return;
+  const meta = {param_stand: ew.meta.stand || heute(), geprueft_am: heute(), erinnern_ab: "", param_quelle: ew.meta.quelle || ""};
+  if (ew.jahr) meta.param_jahr = ew.jahr;
+  const n = unterschiede(zustand.p, ew.p).length;
+  zustand.entwurf = null;
+  await parameterAendern(ew.p, `Übernahme aus ${ew.meta.quelle || "Websuche"}`, meta);
+  historieAnzeigen(); pruefAnzeigen(); leisteAktualisieren();
+  zeigeToast(`${n} neue Wert(e) gespeichert – die bisherigen Werte stehen in der Historie.`);
+}
+async function entwurfVerwerfen() {
+  if (!zustand.entwurf) return;
+  if (!await frage("Entwurf verwerfen", "Den Entwurf verwerfen? Die gespeicherten Werte bleiben unverändert.", "Verwerfen")) return;
+  zustand.entwurf = null; rechnen();
+}
+async function entwurfAuswahl() {
+  const ew = zustand.entwurf; if (!ew) return;
+  const imEntwurf = new Set(unterschiede(zustand.p, ew.p));
+  const zeilen = ew.zeilen.map(z => ({...z, an: imEntwurf.has(z.key)}));
+  const j = ew.meta.jahr;
+  const res = await vergleich("Entwurf – Werte auswählen", `Quelle: ${ew.meta.quelle} · gesucht für Jahr ${j}${ew.meta.hinweis ? "\n" + ew.meta.hinweis : ""}\nAutomatisch ermittelte Werte sind Vorschläge – bitte die Fundstelle prüfen.`,
+    zeilen, j && +j !== +zustand.einst.param_jahr ? j : null, "Auswahl in den Entwurf übernehmen");
   if (!res) return;
-  const metaNeu = {param_stand: meta.stand || heute(), geprueft_am: heute(), erinnern_ab: ""};
-  if (Object.keys(res.werte).length) metaNeu.param_quelle = meta.quelle;
-  if (res.jahrSetzen && jahrNeu) metaNeu.param_jahr = +jahrNeu;
-  const geaendert = await parameterAendern(res.werte, `Übernahme aus ${meta.quelle}`, metaNeu);
-  historieAnzeigen(); pruefAnzeigen();
-  zeigeToast(geaendert && Object.keys(res.werte).length ? `${Object.keys(res.werte).length} Wert(e) übernommen – die bisherigen Werte stehen in der Historie.` : "Keine Werte geändert. Prüfdatum gespeichert.");
+  ew.p = {...zustand.p, ...res.werte};
+  ew.jahr = (j && res.jahrSetzen) ? +j : null;
+  if (!Object.keys(res.werte).length && !ew.jahr) zustand.entwurf = null;
+  rechnen();
 }
 function paketLesen(d) {
   const werte = d && d.parameter ? d.parameter : d;
@@ -1596,7 +1708,13 @@ function hilfeAufbauen() {
     ["h-est", "Einkommensteuer", `<ul><li>Tarif 2026: bis 13.539 € 0 %, bis 21.992 € 20 %, bis 36.458 € 30 %, bis 70.365 € 40 %, bis 104.859 € 48 %, bis 1 Mio. € 50 %, darüber 55 %.</li><li>Grundfreibetrag: 15 % des Gewinns, höchstens von 33.000 € (max. 4.950 €).</li><li>Pension und Gewinn werden zusammen veranlagt. Angezeigt wird die MEHRSTEUER durch den Zuverdienst, die bei der Veranlagung nachzuzahlen ist.</li><li>Veranlagungsfreibetrag: Zuverdienst-Einkünfte bis 730 € steuerfrei, eingeschliffen bis 1.460 €.</li><li>Pensionistenabsetzbetrag 2026: 1.020 € (erhöht 1.502 €), eingeschliffen nach den Pensionseinkünften.</li></ul>`],
     ["h-tabelle", "Tabelle & Diagramm", `<p>Die Tabelle variiert die Stunden pro Woche (bei Stundensatz-Eingabe) bzw. den Jahresumsatz. Von/Bis/Schritt sind frei wählbar. Farben: blau = unter der Grenze bzw. befreit, rot = ungünstig, orange = Mindestbeitrag, grün = lohnend. Export als CSV für Excel.</p>`],
     ["h-werte", "Werte prüfen & aktualisieren", `<p>Steuer- und SVS-Werte ändern sich jedes Jahr. Ein farbiger Hinweisbalken erscheint, wenn die Werte für ein früheres Jahr gelten, die letzte Prüfung länger als das Prüfintervall zurückliegt, im Dezember die neuen Werte anstehen oder Werte unplausibel sind. „In 7 Tagen erinnern“ blendet ihn vorübergehend aus.</p>
-      <p><b>So ermitteln Sie aktuelle Werte</b> (Reiter „Werte prüfen &amp; Historie“):</p>
+      <p><b>Mit einem Klick:</b> „🔍 Aktuelle Werte ermitteln“ in der Leiste oben holt die Werte vom <b>Werte-Dienst</b>. Der Dienst durchsucht täglich alle unten genannten Quellen mit derselben Erkennung wie die Windows-Version (EXE) und legt das Ergebnis neben die Webseite.</p>
+      <ol><li>Weichen gefundene Werte (mit passender Jahresangabe) von Ihren ab, werden sie als <b>Entwurf</b> vorbelegt – gespeichert ist noch nichts. Die Leiste wird orange und zeigt „alt → neu“ für Netto-Zuverdienst und Gesamtnetto.</li>
+      <li><b>„⇄“</b> schaltet die gesamte Berechnung – Ergebnis, Tabelle, Diagramm – zwischen alten (gespeicherten) und neuen Werten um.</li>
+      <li><b>„Auswahl…“</b> zeigt jeden Wert mit Fundstelle; dort wählen Sie, was in den Entwurf kommt.</li>
+      <li><b>„💾 Neue Werte speichern“</b> übernimmt den Entwurf; die alten Werte kommen in die Historie. „Verwerfen“ löscht den Entwurf.</li></ol>
+      <p>Auf claude.ai oder als Datei geöffnet darf die Seite den Werte-Dienst nicht abrufen – dann hilft die Text-Methode:</p>
+      <p><b>Text-Methode</b> (Reiter „Werte prüfen &amp; Historie“, ergibt ebenfalls einen Entwurf):</p>
       <ol><li>„Werte suchen für Jahr“ einstellen.</li><li>Eine Quelle aus der Liste öffnen (neuer Tab), dort Strg+A und Strg+C.</li><li>Den Text ins Feld einfügen (mehrere Seiten nacheinander sind möglich) und „Werte ermitteln“ klicken.</li><li>Die Tabelle zeigt aktuellen und gefundenen Wert, Status, ob das Jahr passt, und die Fundstelle. Abweichende Werte mit passendem Jahr sind vorausgewählt. Prüfen, auswählen, übernehmen.</li></ol>
       <p>Warum Kopieren? Ein Browser darf aus Sicherheitsgründen fremde Seiten nicht selbst abrufen. Die Windows-Version (EXE) kann die Seiten direkt laden.</p>
       <p>Die Erkennung liefert VORSCHLÄGE: Sie sucht Zahlen bei passenden Begriffen und prüft Typ, Größenordnung und Jahr. Seiten ändern ihren Aufbau – deshalb immer die Fundstelle ansehen.</p>
@@ -1649,6 +1767,11 @@ function verbinden() {
     tabModus = null; zeigeToast("Standardwerte 2026 gesetzt.");
   };
   $("paramZuWerte").onclick = () => tabWaehlen("werte");
+  $("btnErmitteln").onclick = werteErmitteln;
+  $("btnUmschalten").onclick = entwurfUmschalten;
+  $("btnEntwurfSpeichern").onclick = entwurfSpeichern;
+  $("btnEntwurfAuswahl").onclick = entwurfAuswahl;
+  $("btnEntwurfVerwerfen").onclick = entwurfVerwerfen;
   $("bannerPruefen").onclick = () => tabWaehlen("werte");
   $("bannerSpaeter").onclick = async () => {
     const d = new Date(); d.setDate(d.getDate() + 7); zustand.einst.erinnern_ab = d.toISOString().slice(0, 10);
