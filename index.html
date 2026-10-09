@@ -200,6 +200,20 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
 .hilfe article { max-width: 72ch }
 .hilfe article h2 { margin: 26px 0 8px; scroll-margin-top: 12px }
 .hilfe article p, .hilfe article li { margin: 6px 0 }
+.steuer-kopf { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 12px }
+.steuer-kopf input { min-width: 0; width: 16rem; max-width: 100% }
+.steuer-kat { margin: 22px 0 8px; color: var(--accent); font-size: 1.05rem }
+.steuer-eintrag { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 6px 0 }
+.steuer-eintrag summary { cursor: pointer; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: space-between; list-style: none }
+.steuer-eintrag summary::-webkit-details-marker { display: none }
+.steuer-eintrag summary::before { content: "▸"; color: var(--muted); margin-right: -6px }
+.steuer-eintrag[open] summary::before { content: "▾" }
+.steuer-eintrag summary b { flex: 1 1 14rem }
+.steuer-eintrag summary span { color: var(--c-netto); font-weight: 600; text-align: right }
+.steuer-eintrag .inhalt { padding: 0 14px 12px; max-width: 80ch }
+.steuer-eintrag .inhalt h4 { margin: 10px 0 2px; font-size: .9rem; color: var(--accent) }
+.steuer-eintrag .inhalt p { margin: 2px 0 }
+.steuer-eintrag .box { background: var(--info-bg); color: var(--info); padding: 6px 10px; border-radius: 6px }
 .hilfe .box { background: var(--info-bg); color: var(--info); padding: 8px 12px; border-radius: 6px }
 
 /* Hilfeblase */
@@ -248,6 +262,7 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
     <button role="tab" type="button" data-tab="tabelle" aria-selected="false">Tabelle &amp; Diagramm</button>
     <button role="tab" type="button" data-tab="parameter" aria-selected="false">Parameter</button>
     <button role="tab" type="button" data-tab="werte" aria-selected="false">Werte prüfen &amp; Historie</button>
+    <button role="tab" type="button" data-tab="steuer" aria-selected="false">Steuerabsetzungen</button>
     <button role="tab" type="button" data-tab="hilfe" aria-selected="false">Hilfe</button>
   </nav>
 
@@ -431,6 +446,19 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
       <div class="small muted">Bei jeder Änderung der Werte (manuell, aus Seitentext, Parameterdatei, Zurücksetzen, Wiederherstellen) wird der bisherige Stand hier gesichert. Ein Eintrag enthält die Werte VOR der genannten Änderung.</div>
       <div class="tabwrap"><table class="vgl" id="historie"></table></div>
     </div>
+  </section>
+
+  <!-- ======================== STEUERABSETZUNGEN ======================== -->
+  <section id="tab-steuer" hidden>
+    <h2 style="margin:0 0 4px">Steuerabsetzungen &amp; Steuertipps (Österreich)</h2>
+    <p class="small muted" id="steuerStand" style="margin:0 0 12px"></p>
+    <div class="steuer-kopf">
+      <label>Kategorie <select id="steuerKat" data-tip="Nur eine Gruppe anzeigen, z. B. „Pensionisten“ oder „Selbständige – Betriebsausgaben“."></select></label>
+      <label>Suche <input type="text" id="steuerSuche" placeholder="z. B. Kilometer, Spenden, E30" data-tip="Sucht in Titel, Betrag, Beschreibung und Tipps."></label>
+      <span class="small muted" id="steuerAnzahl"></span>
+      <button type="button" id="steuerAlle" class="btn klein">Alle auf-/zuklappen</button>
+    </div>
+    <div id="steuerListe"></div>
   </section>
 
   <!-- ============================ HILFE ============================ -->
@@ -1679,12 +1707,510 @@ document.addEventListener("contextmenu", ev => { // langes Tippen am Handy zeigt
 let toastTimer;
 function zeigeToast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 3800); }
 function tabWaehlen(name) {
+  if (!document.getElementById("tab-" + name)) name = "berechnung";
   zustand.tab = name;
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name ? "true" : "false"));
-  for (const t of ["berechnung","tabelle","parameter","werte","hilfe"]) $("tab-" + t).hidden = t !== name;
+  for (const t of ["berechnung","tabelle","parameter","werte","steuer","hilfe"]) $("tab-" + t).hidden = t !== name;
   if (name === "tabelle") tabelleAnzeigen();
   if (name === "werte") { pruefAnzeigen(); historieAnzeigen(); quellenAnzeigen(); }
   try { localStorage.setItem("pensionsrechner_tab", name); } catch (e) {}
+}
+
+/* STEUERTIPPS-DATEN-START */
+const STEUERTIPPS = {
+ "stand": "Oktober 2026",
+ "kategorien": [
+  "Pensionisten",
+  "Selbständige – Betriebsausgaben",
+  "Gewinnfreibetrag & Pauschalierung",
+  "Sonderausgaben",
+  "Außergewöhnliche Belastungen",
+  "Behinderung & Pflege",
+  "Familie & Partner",
+  "Tipps & Fristen"
+ ],
+ "eintraege": [
+  {
+   "kategorie": "Pensionisten",
+   "titel": "Pensionistenabsetzbetrag",
+   "betrag": "1.020 € pro Jahr (erhöht 1.502 €)",
+   "text": "Wird direkt von der Steuer abgezogen. Der volle Betrag steht bis 21.614 € Pensionseinkünften zu und sinkt gleichmäßig bis 31.494 € auf null. Der erhöhte Betrag gilt bis 24.616 € und sinkt ebenfalls bis 31.494 €.",
+   "voraussetzung": "Pensionseinkünfte. Erhöht: mehr als 6 Monate verheiratet/eingetragene Partnerschaft, nicht dauernd getrennt, Partner-Einkünfte höchstens 2.720 € im Jahr, kein Anspruch auf den Alleinverdienerabsetzbetrag.",
+   "tipp": "Der Grundbetrag wird automatisch von der Pensionsversicherung berücksichtigt. Den ERHÖHTEN Betrag müssen Sie beantragen – mit Formular E30 bei der pensionsauszahlenden Stelle oder in der Steuererklärung.",
+   "rechner": "ja (Option „Erhöhter Pensionistenabsetzbetrag“)",
+   "quelle": [
+    "USP – Steuerabsetzbeträge",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/steuerabsetzbetraege.html"
+   ]
+  },
+  {
+   "kategorie": "Pensionisten",
+   "titel": "Negativsteuer (SV-Rückerstattung) für Pensionisten",
+   "betrag": "80 % der SV-Beiträge, höchstens 723 € (2026)",
+   "text": "Ist die Pension so niedrig, dass sich keine Einkommensteuer ergibt, werden 80 % der Sozialversicherungsbeiträge zurückerstattet. Die Rückerstattung vermindert sich um eine steuerfreie Ausgleichs- oder Ergänzungszulage.",
+   "voraussetzung": "Anspruch auf den Pensionistenabsetzbetrag und Einkommensteuer unter null.",
+   "tipp": "Kommt automatisch über die antragslose Arbeitnehmerveranlagung. Mit einem selbständigen Zuverdienst ist meist Einkommensteuer zu zahlen – dann entfällt die Negativsteuer.",
+   "rechner": "nein",
+   "quelle": [
+    "oesterreich.gv.at – Negativsteuer",
+    "https://www.oesterreich.gv.at/de/lexicon/N/Seite.991726"
+   ]
+  },
+  {
+   "kategorie": "Pensionisten",
+   "titel": "Veranlagungsfreibetrag für Nebeneinkünfte",
+   "betrag": "bis 730 € steuerfrei, eingeschliffen bis 1.460 €",
+   "text": "Neben einer Pension (oder einem Lohn) bleiben andere Einkünfte – etwa aus einem kleinen selbständigen Zuverdienst – bis 730 € im Jahr steuerfrei. Zwischen 730 € und 1.460 € wird der Freibetrag gleitend kleiner.",
+   "voraussetzung": "Lohnsteuerpflichtige Einkünfte (z. B. Pension) und andere Einkünfte im selben Jahr.",
+   "tipp": "Liegt der Gewinn aus dem Zuverdienst unter 730 €, müssen Sie keine Einkommensteuererklärung abgeben.",
+   "rechner": "ja (Option „Veranlagungsfreibetrag“)",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Pensionisten",
+   "titel": "Besonderer Höherversicherungsbetrag",
+   "betrag": "Erhöhung der Pension ab dem Folgejahr",
+   "text": "Wer neben der regulären Alterspension pflichtversichert erwerbstätig ist, bekommt für die eingezahlten Pensionsversicherungsbeiträge einen besonderen Höherversicherungsbetrag – die Pension steigt.",
+   "voraussetzung": "Reguläre Alterspension und Pflichtversicherung in der Pensionsversicherung (z. B. über der SVS-Grenze).",
+   "tipp": "Die PV-Beiträge sind also nicht verloren. Die Erhöhung wird automatisch ab dem Jahr nach der Tätigkeit berechnet.",
+   "rechner": "nein (nur Hinweis)",
+   "quelle": [
+    "oesterreich.gv.at – Zuverdienst während der Pension",
+    "https://www.oesterreich.gv.at/de/themen/arbeit_beruf_und_pension/pension/Seite.270222"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Sozialversicherungsbeiträge (SVS)",
+   "betrag": "in voller Höhe",
+   "text": "Die SVS-Beiträge (Kranken-, Pensions-, Unfallversicherung, Selbständigenvorsorge) sind Betriebsausgaben – auch zusätzlich zu einer Pauschalierung.",
+   "voraussetzung": "Im Jahr der Zahlung absetzbar (Zufluss-Abfluss-Prinzip).",
+   "tipp": "Nachzahlungen nach der endgültigen Beitragsberechnung sind im Jahr der Zahlung absetzbar – für die Planung der Steuer berücksichtigen.",
+   "rechner": "ja",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Arbeitsplatzpauschale (Arbeiten zu Hause)",
+   "betrag": "1.200 € oder 300 € pro Jahr",
+   "text": "Wer zu Hause arbeitet und kein steuerlich anerkanntes Arbeitszimmer hat, kann eine Pauschale absetzen: 1.200 €, wenn keine anderen Einkünfte aus einer AKTIVEN Erwerbstätigkeit über 13.539 € (2026) mit einem Arbeitsplatz außerhalb der Wohnung bestehen, sonst 300 €.",
+   "voraussetzung": "Selbständige Tätigkeit überwiegend zu Hause, kein Arbeitszimmer abgesetzt.",
+   "tipp": "Eine Pension ist keine aktive Erwerbstätigkeit – Pensionisten mit Zuverdienst kommen daher meist auf 1.200 €. Bei der kleinen Pauschale (300 €) sind ergonomische Möbel zusätzlich absetzbar.",
+   "rechner": "ja – in die tatsächlichen Betriebsausgaben einrechnen (bei Pauschalierung schon abgegolten)",
+   "quelle": [
+    "selbststaendig-machen.at – Arbeitsplatzpauschale 2026",
+    "https://www.selbststaendig-machen.at/arbeitsplatzpauschale-homeoffice-2026/"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Geringwertige Wirtschaftsgüter (GWG)",
+   "betrag": "bis 1.000 € sofort absetzbar",
+   "text": "Arbeitsmittel bis 1.000 € (netto bei Vorsteuerabzug, sonst brutto) können im Jahr der Anschaffung voll abgesetzt werden – z. B. Laptop, Handy, Drucker, Software. Teurere Anschaffungen werden über die Nutzungsdauer abgeschrieben (Computer meist 3 Jahre).",
+   "voraussetzung": "Betriebliche Nutzung; bei Privatnutzung nur der betriebliche Anteil.",
+   "tipp": "Größere Anschaffungen vor Jahresende tätigen, wenn der Gewinn hoch ist – das senkt Steuer UND SVS-Beitragsgrundlage.",
+   "rechner": "ja – in die tatsächlichen Betriebsausgaben einrechnen (bei Pauschalierung schon abgegolten)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Fahrtkosten: Kilometergeld",
+   "betrag": "0,50 €/km (Auto), 0,25 €/km (Motorrad, Fahrrad)",
+   "text": "Betriebliche Fahrten mit dem Privatauto können mit dem amtlichen Kilometergeld abgesetzt werden, höchstens 30.000 km im Jahr. Damit sind alle Kosten des Fahrzeugs abgegolten.",
+   "voraussetzung": "Fahrtenbuch oder gleichwertige Aufzeichnungen (Datum, Ziel, Zweck, Kilometer).",
+   "tipp": "Fahrten zu Kunden, zur Bank, zum Steuerberater und zu Fortbildungen mitschreiben – das summiert sich.",
+   "rechner": "ja – in die tatsächlichen Betriebsausgaben einrechnen (bei Pauschalierung schon abgegolten)",
+   "quelle": [
+    "everbill.com – Diäten und Kilometergeld 2026",
+    "https://www.everbill.com/reisekosten-absetzen/"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Reisekosten: Tages- und Nächtigungsgeld",
+   "betrag": "30 € pro Tag (2,50 € je Stunde), Nächtigung 17 €",
+   "text": "Bei betrieblichen Reisen (mindestens 25 km Entfernung, über 3 Stunden) sind pauschale Tagesgelder absetzbar; für Übernachtungen ohne Beleg 17 €, mit Beleg die tatsächlichen Kosten.",
+   "voraussetzung": "Betrieblich veranlasste Reise; Aufzeichnungen über Dauer und Zweck.",
+   "tipp": "Bei mehrtägigen Kundenterminen Tagesgeld UND Kilometergeld ansetzen.",
+   "rechner": "ja – in die tatsächlichen Betriebsausgaben einrechnen (bei Pauschalierung schon abgegolten)",
+   "quelle": [
+    "everbill.com – Diäten und Kilometergeld 2026",
+    "https://www.everbill.com/reisekosten-absetzen/"
+   ]
+  },
+  {
+   "kategorie": "Selbständige – Betriebsausgaben",
+   "titel": "Weitere typische Betriebsausgaben",
+   "betrag": "tatsächliche Kosten",
+   "text": "Fortbildung und Fachliteratur, Software-Abos, Internet und Telefon (betrieblicher Anteil), Büromaterial, Porto, Bankspesen des Geschäftskontos, Versicherungen für den Betrieb, Website und Werbung, Steuerberatung, WKO-Grundumlage, Kosten des Arbeitszimmers (wenn es fast ausschließlich betrieblich genutzt wird).",
+   "voraussetzung": "Belege; bei gemischter Nutzung nur der betriebliche Anteil.",
+   "tipp": "Ein eigenes Geschäftskonto erleichtert die Zuordnung. Belege laufend sammeln (Ordner oder App).",
+   "rechner": "ja – in die tatsächlichen Betriebsausgaben einrechnen (bei Pauschalierung schon abgegolten)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Gewinnfreibetrag & Pauschalierung",
+   "titel": "Grundfreibetrag (Gewinnfreibetrag)",
+   "betrag": "15 % des Gewinns bis 33.000 € = max. 4.950 €",
+   "text": "Ohne Investition bleiben 15 % des Gewinns bis 33.000 € steuerfrei.",
+   "voraussetzung": "Natürliche Person mit betrieblichen Einkünften; wird automatisch bei der Veranlagung berücksichtigt.",
+   "tipp": "Muss nicht beantragt werden – in der Steuererklärung (E1) einfach den Gewinn eintragen.",
+   "rechner": "ja",
+   "quelle": [
+    "WKO – Der Gewinnfreibetrag",
+    "https://www.wko.at/steuern/der-gewinnfreibetrag"
+   ]
+  },
+  {
+   "kategorie": "Gewinnfreibetrag & Pauschalierung",
+   "titel": "Investitionsbedingter Gewinnfreibetrag",
+   "betrag": "bis 13 % des Gewinns über 33.000 €",
+   "text": "Für Gewinne über 33.000 € kann ein zusätzlicher Freibetrag geltend gemacht werden, wenn im selben Jahr in begünstigte abnutzbare Anlagen (z. B. Computer, Maschinen) oder bestimmte Wertpapiere investiert wird. Gewinnfreibetrag insgesamt höchstens 46.400 € pro Jahr.",
+   "voraussetzung": "Investition im selben Kalenderjahr; Behaltefrist 4 Jahre.",
+   "tipp": "Nur bei höheren Gewinnen relevant. Bei Pauschalierung ist nur der Grundfreibetrag möglich.",
+   "rechner": "nein",
+   "quelle": [
+    "WKO – Der Gewinnfreibetrag",
+    "https://www.wko.at/steuern/der-gewinnfreibetrag"
+   ]
+  },
+  {
+   "kategorie": "Gewinnfreibetrag & Pauschalierung",
+   "titel": "Basispauschalierung",
+   "betrag": "15 % des Umsatzes (2026), Umsatzgrenze 420.000 €",
+   "text": "Statt aller Einzelbelege dürfen pauschal 15 % des Umsatzes als Betriebsausgaben abgezogen werden. Zusätzlich absetzbar u. a. SVS-Beiträge, Wareneinkauf, Löhne und Fremdleistungen. Für bestimmte Tätigkeiten (z. B. kaufmännische oder technische Beratung, wesentliche Beteiligung) gilt ein niedrigerer Satz.",
+   "voraussetzung": "Einnahmen-Ausgaben-Rechnung, Umsatz im Vorjahr unter der Grenze.",
+   "tipp": "Lohnt sich, wenn Ihre tatsächlichen Ausgaben unter 15 % liegen. Mit dem Rechner beide Varianten vergleichen!",
+   "rechner": "ja (Betriebsausgaben-Art)",
+   "quelle": [
+    "BMF – Mittelstandspaket (Basispauschalierung)",
+    "https://www.bmf.gv.at/presse/pressemeldungen/2025/maerz/mittelstandspaket.html"
+   ]
+  },
+  {
+   "kategorie": "Gewinnfreibetrag & Pauschalierung",
+   "titel": "Kleinunternehmerpauschalierung",
+   "betrag": "20 % (Dienstleistung) bzw. 45 % des Umsatzes",
+   "text": "Für Kleinunternehmer bis 55.000 € Umsatz: pauschale Betriebsausgaben von 45 %, bei Dienstleistungsbetrieben 20 %. Daneben sind nur noch die SVS-Beiträge absetzbar.",
+   "voraussetzung": "Umsatz höchstens 55.000 € (Kleinunternehmergrenze).",
+   "tipp": "Besonders günstig bei geringen tatsächlichen Ausgaben. Welcher Satz gilt, mit WKO/Steuerberatung klären.",
+   "rechner": "ja (Betriebsausgaben-Art)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Sonderausgaben",
+   "titel": "Kirchenbeitrag",
+   "betrag": "bis 600 € pro Jahr",
+   "text": "Verpflichtende Beiträge an gesetzlich anerkannte Kirchen und Religionsgesellschaften.",
+   "voraussetzung": "Zahlung im betreffenden Jahr.",
+   "tipp": "Wird automatisch an das Finanzamt übermittelt – Name und Geburtsdatum bei der Kirche korrekt angeben.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Sonderausgaben",
+   "titel": "Spenden",
+   "betrag": "bis 10 % des Gesamtbetrags der Einkünfte",
+   "text": "Spenden an begünstigte Organisationen (Liste des BMF), z. B. für mildtätige Zwecke, Forschung, Umweltschutz, Tierschutz, Feuerwehren.",
+   "voraussetzung": "Empfänger steht in der BMF-Liste der spendenbegünstigten Einrichtungen.",
+   "tipp": "Bei der Spende Vor- und Zuname sowie Geburtsdatum angeben – dann wird sie automatisch berücksichtigt.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Sonderausgaben",
+   "titel": "Steuerberatungskosten",
+   "betrag": "unbegrenzt",
+   "text": "Kosten für Steuerberatung sind Sonderausgaben, soweit sie nicht schon Betriebsausgaben sind. Für Selbständige sind die Kosten der Buchhaltung und Steuererklärung meist Betriebsausgaben.",
+   "voraussetzung": "Befugter Steuerberater; Rechnung.",
+   "tipp": "Die Rechnung des Steuerberaters aufteilen lassen: betrieblicher Teil = Betriebsausgabe, privater Teil = Sonderausgabe.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Sonderausgaben",
+   "titel": "Nachkauf von Versicherungszeiten, freiwillige Weiterversicherung",
+   "betrag": "unbegrenzt",
+   "text": "Beiträge zum Nachkauf von Schul- und Studienzeiten sowie zur freiwilligen Weiterversicherung in der Pensionsversicherung sind voll absetzbar.",
+   "voraussetzung": "Zahlung im betreffenden Jahr.",
+   "tipp": "Wird automatisch übermittelt. Hohe Nachkäufe in ein Jahr mit hohem Einkommen legen.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Sonderausgaben",
+   "titel": "Öko-Sonderausgabenpauschale",
+   "betrag": "800 € (thermische Sanierung) bzw. 400 € (Heizungstausch) pro Jahr, 5 Jahre",
+   "text": "Wer eine geförderte thermisch-energetische Sanierung oder den Tausch eines fossilen Heizsystems durchführt, erhält über fünf Jahre eine Sonderausgabenpauschale.",
+   "voraussetzung": "Förderung durch den Bund (z. B. „Sanierungsbonus“, „Raus aus Öl und Gas“).",
+   "tipp": "Wird nach der Förderung automatisch berücksichtigt – trotzdem im Bescheid kontrollieren.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Außergewöhnliche Belastungen",
+   "titel": "Krankheitskosten",
+   "betrag": "tatsächliche Kosten abzüglich Selbstbehalt",
+   "text": "Arzt- und Zahnarztkosten, Selbstbehalte, Medikamente, Brillen, Hörgeräte, Zahnersatz, Kuraufenthalte (ärztlich verordnet), Fahrtkosten zur Behandlung. Absetzbar ist der Teil über dem Selbstbehalt: 6 % des Einkommens bis 7.300 €, 8 % bis 14.600 €, 10 % bis 36.400 €, 12 % darüber (minus 1 % bei Alleinverdiener- bzw. Alleinerzieherabsetzbetrag und je Kind).",
+   "voraussetzung": "Belege; Kostenersätze (Kasse, Versicherung) werden abgezogen.",
+   "tipp": "Alle Gesundheitsbelege eines Jahres sammeln – erst die Summe zeigt, ob der Selbstbehalt überschritten wird. Bei Behinderung ab 25 % fällt der Selbstbehalt für behinderungsbedingte Kosten weg.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Außergewöhnliche Belastungen",
+   "titel": "Begräbniskosten",
+   "betrag": "tatsächliche Kosten abzüglich Selbstbehalt",
+   "text": "Kosten des Begräbnisses und eines angemessenen Grabmals, soweit sie nicht durch den Nachlass gedeckt sind.",
+   "voraussetzung": "Sie tragen die Kosten selbst; Nachlass reicht nicht aus.",
+   "tipp": "Verlassenschaftsabhandlung und Rechnungen aufbewahren.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Außergewöhnliche Belastungen",
+   "titel": "Katastrophenschäden",
+   "betrag": "tatsächliche Kosten, OHNE Selbstbehalt",
+   "text": "Kosten zur Beseitigung von Schäden durch Hochwasser, Sturm, Lawinen, Erdrutsch u. ä. am Wohnraum und an notwendigem Hausrat.",
+   "voraussetzung": "Kein Ersatz durch Versicherung oder Katastrophenfonds (Ersätze werden abgezogen).",
+   "tipp": "Schäden fotografieren und Rechnungen sammeln.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Behinderung & Pflege",
+   "titel": "Pauschaler Freibetrag bei Behinderung",
+   "betrag": "124 € bis 1.198 € pro Jahr",
+   "text": "Je nach Grad der Behinderung: 25–34 %: 124 €, 35–44 %: 164 €, 45–54 %: 401 €, 55–64 %: 486 €, 65–74 %: 599 €, 75–84 %: 718 €, 85–94 %: 837 €, ab 95 %: 1.198 €. Ohne Selbstbehalt; statt der Pauschale können auch die tatsächlichen Mehraufwendungen angesetzt werden.",
+   "voraussetzung": "Grad der Behinderung mindestens 25 % (Behindertenpass oder Bescheid). Kein Pflegegeldbezug (sonst gelten die tatsächlichen Kosten).",
+   "tipp": "Auch für den (Ehe-)Partner, wenn dessen Einkünfte höchstens 7.411 € betragen oder Sie Alleinverdiener sind.",
+   "rechner": "nein",
+   "quelle": [
+    "BMF – Außergewöhnliche Belastungen bei Behinderung",
+    "https://www.bmf.gv.at/themen/steuern/arbeitnehmerveranlagung/was-kann-ich-geltend-machen/aussergewoehnliche-belastungen/aussergewoehnliche-belastungen-bei-behinderung.html"
+   ]
+  },
+  {
+   "kategorie": "Behinderung & Pflege",
+   "titel": "Kfz-Freibetrag / Taxikosten bei Gehbehinderung",
+   "betrag": "190 € pro Monat (Kfz) bzw. bis 153 € pro Monat (Taxi)",
+   "text": "Wer öffentliche Verkehrsmittel wegen einer Behinderung nicht benützen kann und für Privatfahrten ein eigenes Fahrzeug braucht, erhält 190 € pro Monat. Ohne eigenes Auto sind Taxikosten bis 153 € pro Monat absetzbar.",
+   "voraussetzung": "Nachweis der Unzumutbarkeit öffentlicher Verkehrsmittel (z. B. Ausweis § 29b StVO, Eintrag im Behindertenpass).",
+   "tipp": "Zusätzlich zum pauschalen Freibetrag möglich.",
+   "rechner": "nein",
+   "quelle": [
+    "BMF – Außergewöhnliche Belastungen bei Behinderung",
+    "https://www.bmf.gv.at/themen/steuern/arbeitnehmerveranlagung/was-kann-ich-geltend-machen/aussergewoehnliche-belastungen/aussergewoehnliche-belastungen-bei-behinderung.html"
+   ]
+  },
+  {
+   "kategorie": "Behinderung & Pflege",
+   "titel": "Diätverpflegung",
+   "betrag": "70 €, 51 € oder 42 € pro Monat",
+   "text": "Pauschale bei Zuckerkrankheit, Zöliakie, Tuberkulose oder Aids (70 €), Gallen-, Leber- oder Nierenkrankheit (51 €), Magen- oder anderer innerer Krankheit (42 €).",
+   "voraussetzung": "Grad der Behinderung mindestens 25 %, Diät ärztlich bestätigt.",
+   "tipp": "Bei mehreren Krankheiten gilt der höhere Betrag.",
+   "rechner": "nein",
+   "quelle": [
+    "BMF – Außergewöhnliche Belastungen bei Behinderung",
+    "https://www.bmf.gv.at/themen/steuern/arbeitnehmerveranlagung/was-kann-ich-geltend-machen/aussergewoehnliche-belastungen/aussergewoehnliche-belastungen-bei-behinderung.html"
+   ]
+  },
+  {
+   "kategorie": "Behinderung & Pflege",
+   "titel": "Pflegekosten (Pflegeheim, 24-Stunden-Betreuung)",
+   "betrag": "tatsächliche Kosten abzüglich Pflegegeld, ohne Selbstbehalt",
+   "text": "Kosten für Pflege – im Heim oder zu Hause – sind bei Pflegegeldbezug als behinderungsbedingte Kosten ohne Selbstbehalt absetzbar (abzüglich Pflegegeld und Förderungen). Auch für Angehörige möglich, wenn deren Einkommen nicht ausreicht.",
+   "voraussetzung": "Pflegebedürftigkeit (Pflegegeldbescheid); Rechnungen.",
+   "tipp": "Bei Heimkosten wird ein Anteil für Haushaltsersparnis abgezogen – Steuerberatung lohnt sich hier oft.",
+   "rechner": "nein",
+   "quelle": [
+    "BMF – Außergewöhnliche Belastungen bei Behinderung",
+    "https://www.bmf.gv.at/themen/steuern/arbeitnehmerveranlagung/was-kann-ich-geltend-machen/aussergewoehnliche-belastungen/aussergewoehnliche-belastungen-bei-behinderung.html"
+   ]
+  },
+  {
+   "kategorie": "Familie & Partner",
+   "titel": "Alleinverdienerabsetzbetrag",
+   "betrag": "612 € (1 Kind), 828 € (2 Kinder), je weiteres Kind +273 €",
+   "text": "Für Alleinverdiener mit Anspruch auf Familienbeihilfe für mindestens ein Kind.",
+   "voraussetzung": "Mehr als 6 Monate verheiratet/Partnerschaft, Partner-Einkünfte höchstens 7.411 € (2026).",
+   "tipp": "Mit Formular E30 bzw. in der Steuererklärung beantragen. Schließt den erhöhten Pensionistenabsetzbetrag aus.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Steuerabsetzbeträge",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/steuerabsetzbetraege.html"
+   ]
+  },
+  {
+   "kategorie": "Familie & Partner",
+   "titel": "Familienbonus Plus",
+   "betrag": "2.000,16 € pro Kind unter 18, 700,08 € pro volljährigem Kind (mit Familienbeihilfe)",
+   "text": "Absetzbetrag für Kinder, für die Familienbeihilfe bezogen wird; senkt die Steuer direkt.",
+   "voraussetzung": "Familienbeihilfe; Kind lebt in Österreich, EU/EWR oder der Schweiz.",
+   "tipp": "Auch für Pensionisten mit Kindern relevant – mit E30 oder in der Veranlagung beantragen.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Steuerabsetzbeträge",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/steuerabsetzbetraege.html"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Steuererklärung (E1) – Fristen",
+   "betrag": "30. April (Papier) bzw. 30. Juni (FinanzOnline)",
+   "text": "Mit Einkünften aus einem selbständigen Zuverdienst über 730 € besteht Pflicht zur Einkommensteuererklärung (E1 mit Beilage E1a). Mit Steuerberater gelten längere Fristen.",
+   "voraussetzung": "Einkünfte aus selbständiger Arbeit bzw. Gewerbebetrieb.",
+   "tipp": "Online über FinanzOnline ist die Frist länger und die Bearbeitung schneller.",
+   "rechner": "Hinweis „Pflichtveranlagung“",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Rücklage für Nachzahlungen bilden",
+   "betrag": "Richtwert: Mehrsteuer + SVS laut Rechner",
+   "text": "Die Einkommensteuer auf den Zuverdienst und die SVS-Nachbemessung kommen zeitversetzt – oft ein bis zwei Jahre später. Danach setzen Finanzamt und SVS Vorauszahlungen fest.",
+   "voraussetzung": "–",
+   "tipp": "Monatlich einen festen Betrag auf ein eigenes Konto legen – der Rechner zeigt „Mehrsteuer“ und „SVS gesamt“.",
+   "rechner": "ja (Werte im Ergebnis)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Vorauszahlungen anpassen lassen",
+   "betrag": "Antrag auf Herabsetzung",
+   "text": "Sinkt der Zuverdienst, können Einkommensteuer-Vorauszahlungen (bis 30. September) und die vorläufigen SVS-Beiträge auf Antrag herabgesetzt werden.",
+   "voraussetzung": "Glaubhaft gemachte niedrigere Einkünfte.",
+   "tipp": "Antrag beim Finanzamt über FinanzOnline bzw. bei der SVS (Online-Service „SVS-Portal“).",
+   "rechner": "nein",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Zufluss-Abfluss-Prinzip nutzen",
+   "betrag": "Zeitpunkt von Zahlungen steuern",
+   "text": "In der Einnahmen-Ausgaben-Rechnung zählt der Zahlungszeitpunkt. Ausgaben vor dem Jahresende bezahlen bzw. Rechnungen erst im Jänner stellen verschiebt Gewinn ins nächste Jahr (regelmäßig wiederkehrende Zahlungen: 10-Tage-Regel um den Jahreswechsel).",
+   "voraussetzung": "Einnahmen-Ausgaben-Rechner (keine Bilanzierung).",
+   "tipp": "Nützlich, um knapp unter einer Grenze zu bleiben (z. B. SVS-Versicherungsgrenze oder KV/PV-Befreiung) – der Rechner zeigt, wo diese Grenzen liegen.",
+   "rechner": "ja (ungünstiger Bereich)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Belege aufbewahren",
+   "betrag": "7 Jahre",
+   "text": "Belege, Aufzeichnungen und Rechnungen sind sieben Jahre aufzubewahren – elektronisch ist zulässig.",
+   "voraussetzung": "–",
+   "tipp": "Belege gleich beim Bezahlen fotografieren oder in einer Buchhaltungs-App ablegen.",
+   "rechner": "nein",
+   "quelle": [
+    "USP – Sonderausgaben und außergewöhnliche Belastungen",
+    "https://www.usp.gv.at/steuern-finanzen/einkommensteuer-ueberblick/weitere-informationen-est/sonderausgaben-und-aussergewoehnliche-belastungen.html"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Rückwirkende Veranlagung",
+   "betrag": "bis zu 5 Jahre zurück",
+   "text": "Die Arbeitnehmerveranlagung (ohne Pflicht zur Steuererklärung) kann bis zu fünf Jahre rückwirkend beantragt werden – etwa für vergessene Krankheitskosten oder den erhöhten Pensionistenabsetzbetrag.",
+   "voraussetzung": "Für Jahre ohne Pflichtveranlagung; sonst Wiederaufnahme bzw. Beschwerde gegen den Bescheid.",
+   "tipp": "Frühere Bescheide auf vergessene Absetzbeträge durchsehen.",
+   "rechner": "nein",
+   "quelle": [
+    "oesterreich.gv.at – Negativsteuer",
+    "https://www.oesterreich.gv.at/de/lexicon/N/Seite.991726"
+   ]
+  },
+  {
+   "kategorie": "Tipps & Fristen",
+   "titel": "Kleinunternehmer: Rechnungshinweis",
+   "betrag": "bis 55.000 € Umsatz keine USt",
+   "text": "Kleinunternehmer stellen Rechnungen ohne Umsatzsteuer aus und vermerken das auf der Rechnung („Umsatzsteuerbefreit – Kleinunternehmer gemäß § 6 Abs. 1 Z 27 UStG“).",
+   "voraussetzung": "Umsatz höchstens 55.000 € im Jahr.",
+   "tipp": "Wird die Grenze überschritten, ab diesem Umsatz 20 % USt verrechnen – der Rechner warnt.",
+   "rechner": "ja (Warnung)",
+   "quelle": [
+    "WKO – Einkommensteuer 2026",
+    "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-2026"
+   ]
+  }
+ ]
+};
+/* STEUERTIPPS-DATEN-ENDE */
+function steuerAufbauen() {
+  $("steuerStand").textContent = `Stand: ${STEUERTIPPS.stand} – ohne Gewähr, im Zweifel Finanzamt oder Steuerberatung fragen. Viele Punkte senken die Steuer zusätzlich; der Rechner berücksichtigt nur die mit „Im Rechner: ja“.`;
+  $("steuerKat").innerHTML = ["Alle", ...STEUERTIPPS.kategorien].map(k => `<option>${esc(k)}</option>`).join("");
+  steuerFiltern();
+}
+function steuerFiltern() {
+  const kat = $("steuerKat").value || "Alle", such = $("steuerSuche").value.trim().toLowerCase();
+  let html = "", n = 0;
+  for (const k of STEUERTIPPS.kategorien) {
+    if (kat !== "Alle" && kat !== k) continue;
+    const liste = STEUERTIPPS.eintraege.filter(e => e.kategorie === k && (!such || Object.values(e).flat().join(" ").toLowerCase().includes(such)));
+    if (!liste.length) continue;
+    n += liste.length;
+    html += `<h3 class="steuer-kat">${esc(k)}</h3>` + liste.map(e => `<details class="steuer-eintrag"${such ? " open" : ""}>
+      <summary><b>${esc(e.titel)}</b><span>${esc(e.betrag)}</span></summary>
+      <div class="inhalt"><p>${esc(e.text)}</p>
+      <h4>Voraussetzungen</h4><p>${esc(e.voraussetzung)}</p>
+      <h4>Tipp</h4><p class="box">${esc(e.tipp)}</p>
+      <h4>Im Rechner</h4><p>${esc(e.rechner)}</p>
+      <h4>Quelle</h4><p><a href="${esc(e.quelle[1])}" target="_blank" rel="noopener">${esc(e.quelle[0])}</a></p></div></details>`).join("");
+  }
+  $("steuerListe").innerHTML = html || `<p class="muted">Keine Einträge gefunden.</p>`;
+  $("steuerAnzahl").textContent = `${n} von ${STEUERTIPPS.eintraege.length} Einträgen`;
 }
 
 /* =====================================================================
@@ -1742,7 +2268,10 @@ function hilfeAufbauen() {
     ["h-historie", "Historie – frühere Werte wiederherstellen", `<p>Bei JEDER Änderung der Rechenwerte – manuell, aus Seitentext, Parameterdatei, Zurücksetzen oder Wiederherstellen – wird der bisherige Stand automatisch gesichert (bis 300 Einträge). Auch ein Wechsel des Werte-Jahres wird gesichert.</p>
       <ul><li>„Vergleichen…“: alt/neu nebeneinander – einzelne Werte zurückholen.</li><li>„Wiederherstellen“: alle Werte des Eintrags inkl. Jahr und Quelle.</li><li>„Aktuellen Stand sichern“: Momentaufnahme mit Kommentar, ohne etwas zu ändern.</li></ul><p>Auch eine Wiederherstellung sichert vorher den aktuellen Stand – nichts geht verloren.</p>`],
     ["h-speicher", "Wo werden meine Daten gespeichert?", `<p>Auf claude.ai geöffnet: in Ihrem Konto, privat – andere Personen, mit denen Sie die Seite teilen, sehen Ihre Werte nicht und haben eigene. Als Datei im Browser geöffnet: im Speicher dieses Browsers (beim Löschen der Browserdaten geht er verloren – exportieren Sie wichtige Stände als Parameterdatei).</p><p>Gespeichert werden Parameter, Einstellungen, Historie, Szenarien und Ihre letzten Eingaben.</p>`],
-    ["h-grenzen", "Nicht berücksichtigt", `<ul><li>Umsatzsteuer über der Kleinunternehmergrenze (nur Warnung).</li><li>Investitionsbedingter Gewinnfreibetrag, Sonderausgaben, außergewöhnliche Belastungen, Kirchenbeitrag, Familienbonus.</li><li>Negativsteuer (SV-Rückerstattung) bei geringer Pension.</li><li>Vorläufige SVS-Beitragsgrundlagen, Beitragsrückerstattung bei Mehrfachversicherung im Detail, Höherversicherung aus PV-Beiträgen.</li><li>Kammerumlage 1/2 und Fachgruppen-Details.</li></ul><p>Alle Angaben ohne Gewähr. Der Rechner ersetzt keine Steuer- oder Rechtsberatung.</p>`],
+    ["h-steuer", "Reiter „Steuerabsetzungen“", `<p>Der Reiter listet Absetzbeträge, Freibeträge, Sonderausgaben, außergewöhnliche Belastungen, Betriebsausgaben für Selbständige sowie Steuertipps und Fristen – jeweils mit Betrag, Voraussetzungen, Tipp, Quelle und dem Hinweis, ob der Rechner den Punkt berücksichtigt.</p>
+      <ul><li>Kategorie wählen oder einen Suchbegriff eingeben (z. B. „Kilometer“, „Pension“, „Spenden“).</li><li>Eintrag anklicken, um die Beschreibung aufzuklappen.</li></ul>
+      <p class="box">Viele dieser Punkte (Sonderausgaben, Behinderung, Krankheitskosten) senken die Steuer zusätzlich – der Rechner rechnet sie nicht ein, das tatsächliche Netto kann also etwas höher sein.</p>`],
+    ["h-grenzen", "Nicht berücksichtigt", `<ul><li>Umsatzsteuer über der Kleinunternehmergrenze (nur Warnung).</li><li>Investitionsbedingter Gewinnfreibetrag, Sonderausgaben, außergewöhnliche Belastungen, Kirchenbeitrag, Familienbonus (Überblick im Reiter „Steuerabsetzungen“).</li><li>Negativsteuer (SV-Rückerstattung) bei geringer Pension.</li><li>Vorläufige SVS-Beitragsgrundlagen, Beitragsrückerstattung bei Mehrfachversicherung im Detail, Höherversicherung aus PV-Beiträgen.</li><li>Kammerumlage 1/2 und Fachgruppen-Details.</li></ul><p>Alle Angaben ohne Gewähr. Der Rechner ersetzt keine Steuer- oder Rechtsberatung.</p>`],
   ];
   $("hilfeNav").innerHTML = S.map(([id, t]) => `<a href="#${id}" data-hilfe="${id}">${esc(t)}</a>`).join("");
   $("hilfeText").innerHTML = S.map(([id, t, h]) => `<h2 id="${id}">${esc(t)}</h2>${h}`).join("");
@@ -1757,6 +2286,9 @@ function szenarienAnzeigen() { $("szenarioListe").innerHTML = Object.keys(zustan
 
 function verbinden() {
   document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => tabWaehlen(b.dataset.tab)));
+  $("steuerKat").addEventListener("change", steuerFiltern);
+  $("steuerSuche").addEventListener("input", steuerFiltern);
+  $("steuerAlle").addEventListener("click", () => { const d = [...document.querySelectorAll(".steuer-eintrag")]; const auf = !d.every(x => x.open); d.forEach(x => x.open = auf); });
   document.addEventListener("click", ev => { const a = ev.target.closest("a[data-hilfe]"); if (a) { ev.preventDefault(); hilfeZeigen(a.dataset.hilfe); } });
   $("eingabe").addEventListener("input", eingabeGeaendert);
   $("eingabe").addEventListener("change", eingabeGeaendert);
@@ -1839,7 +2371,7 @@ function verbinden() {
 }
 
 async function start() {
-  paramAufbauen(); hilfeAufbauen(); verbinden();
+  paramAufbauen(); hilfeAufbauen(); steuerAufbauen(); verbinden();
   eingabenSetzen(zustand.e); modusAnzeigen(zustand.e); paramAnzeigen();
   $("zieljahr").value = Math.max(+zustand.einst.param_jahr, new Date().getFullYear());
   let tab = "berechnung"; try { tab = localStorage.getItem("pensionsrechner_tab") || tab; } catch (e) {}
@@ -1861,6 +2393,5 @@ async function start() {
 }
 start();
 </script>
-
 </body>
 </html>
