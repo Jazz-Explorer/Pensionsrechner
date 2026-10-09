@@ -6,7 +6,7 @@
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Pensionsrechner Österreich</title>
+<title>Pensionszuverdienstrechner Österreich</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -69,6 +69,9 @@ header.top .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto 
 .wl-text { flex: 1 1 320px; min-width: 0; font-size: .85rem; color: var(--info); white-space: pre-line }
 .werteleiste.neu .wl-text { color: var(--warn); font-weight: 600 }
 button.btn.umschalter { min-width: 230px }
+.ergmodus { display: inline-block; width: 15.5em; text-align: center; white-space: nowrap; font-size: .8rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 99px; background: var(--info-bg); color: var(--info) }
+.ergmodus.neu { background: var(--warn); color: var(--surface) }
 button.btn.umschalter.neu { background: var(--warn); color: var(--surface); border-color: var(--warn) }
 nav.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-bottom: 16px }
 nav.tabs button { appearance: none; border: 0; background: none; font: inherit; font-weight: 600; color: var(--muted);
@@ -213,7 +216,7 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Pensionsrechner Österreich</h1>
+      <h1>Pensionszuverdienstrechner Österreich</h1>
       <div class="muted small">Alterspension + selbständiger Zuverdienst · Neuer Selbständiger oder Gewerbe (GSVG)</div>
     </div>
     <div class="chips">
@@ -347,7 +350,7 @@ table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
 
     <div class="stack" id="ergebnis" aria-live="polite">
       <div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline">
-        <h2 id="ergTitel">Ergebnis 2026</h2><span class="muted small" id="ergArt"></span>
+        <h2 id="ergTitel">Ergebnis 2026</h2><span class="ergmodus" id="ergModus" hidden></span><span class="muted small" id="ergArt"></span>
         <span class="muted small" style="margin-left:auto">Maus über eine Zeile → Erklärung</span>
       </div>
       <div class="tiles" id="tiles"></div>
@@ -1268,14 +1271,22 @@ function ergebnisAnzeigen(r, e, p) {
     <div class="tile" data-tip="So viel Prozent des Umsatzes bleiben netto."><div class="k">Nettoanteil vom Umsatz</div><div class="v" style="color:${ungue ? "var(--bad)" : "inherit"}">${fmtP(r.anteil_umsatz)}</div><div class="s">Umsatz ${fmt(r.umsatz, 0)}</div></div>
     <div class="tile" data-tip="SVS-Beiträge und Mehrsteuer durch den Zuverdienst."><div class="k">SVS + Mehrsteuer / Jahr</div><div class="v">${fmt(s.summe + r.mehrsteuer, 0)}</div><div class="s">SVS ${fmt(s.summe, 0)} · ESt ${fmt(r.mehrsteuer, 0)}</div></div>
     <div class="tile" data-tip="Pension netto + Zuverdienst netto, gleichmäßig auf 12 Monate verteilt."><div class="k">Gesamt netto / Monat</div><div class="v">${fmt(r.netto_gesamt_monat)}</div><div class="s">nur Pension: ${fmt(pen.netto / 12)}</div></div>`;
-  $("warnungen").innerHTML = (zustand.entwurf && zustand.entwurf.zeigeNeu ? `<div class="meldung orange">Anzeige mit den NEUEN Werten (Entwurf, noch nicht gespeichert) – „⇄“ in der Leiste oben schaltet auf die gespeicherten Werte zurück.</div>` : "") + r.warnungen.filter(w => w[0] !== "info").map(w => `<div class="meldung ${w[0]}">⚠ ${esc(w[1])}</div>`).join("");
+  // Anzeige-Modus in der Überschrift (feste Breite) – beim Umschalten alt/neu verschiebt sich nichts
+  const modus = $("ergModus"), ew = zustand.entwurf;
+  modus.hidden = !ew;
+  if (ew) {
+    modus.textContent = ew.zeigeNeu ? "▶ NEUE Werte (Entwurf)" : "▶ ALTE Werte (gespeichert)";
+    modus.classList.toggle("neu", ew.zeigeNeu);
+    modus.dataset.tip = "Mit „⇄“ in der Leiste oben schalten Sie zwischen gespeicherten (alten) und gefundenen (neuen) Werten um.";
+  }
+  $("warnungen").innerHTML = r.warnungen.filter(w => w[0] !== "info").map(w => `<div class="meldung ${w[0]}">⚠ ${esc(w[1])}</div>`).join("");
   $("hinweise").innerHTML = r.warnungen.filter(w => w[0] === "info").map(w => `<div class="meldung info">ℹ ${esc(w[1])}</div>`).join("");
   $("bericht").innerHTML = berichtZeilen(r, e, p).map(z => z.h ? `<tr><th colspan="3">${esc(z.h)}</th></tr>`
     : `<tr class="${z.art}"${z.tip ? ` data-tip="${esc(z.tip)}"` : ""}><td>${esc(z.label)}</td><td class="w">${esc(z.wert)}</td><td class="x">${esc(z.extra)}</td></tr>`).join("");
 }
 function berichtText() {
   const r = zustand.ergebnis, e = zustand.e, p = pCalc();
-  let t = `Pensionsrechner Österreich – Bericht vom ${new Date().toLocaleString("de-AT")}\nWerte für ${zustand.einst.param_jahr} (${zustand.einst.param_quelle})\n${"=".repeat(70)}\n\n`;
+  let t = `Pensionszuverdienstrechner Österreich – Bericht vom ${new Date().toLocaleString("de-AT")}\nWerte für ${zustand.einst.param_jahr} (${zustand.einst.param_quelle})\n${"=".repeat(70)}\n\n`;
   for (const [a, x] of r.warnungen) t += (a === "info" ? "Hinweis: " : "WARNUNG: ") + x + "\n";
   t += "\n";
   for (const z of berichtZeilen(r, e, p)) t += z.h ? `\n${z.h.toUpperCase()}\n` : `  ${z.label.padEnd(46)}${z.wert.padStart(16)}  ${z.extra}\n`;
@@ -1751,8 +1762,8 @@ function verbinden() {
   $("eingabe").addEventListener("change", eingabeGeaendert);
   $("eingabe").addEventListener("submit", ev => ev.preventDefault());
   ["tabVon","tabBis","tabSchritt"].forEach(id => $(id).addEventListener("input", tabelleAnzeigen));
-  $("csvExport").onclick = () => tabDaten && dateiSpeichern(`Pensionsrechner_Tabelle_${heute()}.csv`, csvText());
-  $("berichtExport").onclick = () => zustand.ergebnis && dateiSpeichern(`Pensionsrechner_${heute()}.txt`, berichtText());
+  $("csvExport").onclick = () => tabDaten && dateiSpeichern(`Pensionszuverdienstrechner_Tabelle_${heute()}.csv`, csvText());
+  $("berichtExport").onclick = () => zustand.ergebnis && dateiSpeichern(`Pensionszuverdienstrechner_${heute()}.txt`, berichtText());
   $("eingabenStandard").onclick = () => { eingabenSetzen(EINGABEN_STANDARD); eingabeGeaendert(); };
   $("szSpeichern").onclick = async () => {
     const n = $("szenarioName").value.trim(); if (!n) { zeigeToast("Bitte zuerst einen Namen für das Szenario eingeben."); return; }
@@ -1814,7 +1825,7 @@ function verbinden() {
       await ergebnisZeigen(zeilenAusWerten(zustand.p, pkt.parameter, `Datei ${f.name}`), {jahr: pkt.jahr || +zustand.einst.param_jahr, quelle: pkt.quelle || `Datei ${f.name}`, stand: pkt.stand});
     } catch (e) { zeigeToast("Datei konnte nicht gelesen werden: " + e.message); }
   });
-  $("exportDatei").onclick = () => dateiSpeichern(`pensionsrechner_parameter_${zustand.einst.param_jahr}.json`, JSON.stringify({
+  $("exportDatei").onclick = () => dateiSpeichern(`pensionszuverdienstrechner_parameter_${zustand.einst.param_jahr}.json`, JSON.stringify({
     format: "pensionsrechner-parameter", version: 1, jahr: +zustand.einst.param_jahr, stand: heute(), quelle: zustand.einst.param_quelle || "", parameter: zustand.p}, null, 2));
   $("vglStandard").onclick = () => ergebnisZeigen(zeilenAusWerten(zustand.p, PARAMETER_STANDARD, "Im Rechner eingebaute Werte"), {jahr: STANDARD_JAHR, quelle: "Eingebaute Standardwerte 2026", stand: STANDARD_STAND});
   $("standSichern").onclick = async () => {
