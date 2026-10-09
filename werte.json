@@ -1,0 +1,223 @@
+{
+ "format": "pensionsrechner-werte",
+ "version": 1,
+ "erstellt": "2026-10-09T21:36:16+00:00",
+ "jahr": 2026,
+ "quellen": [
+  "WKO – Einkommensteuer & Absetzbeträge 2026",
+  "WKO – Beitragswesen Selbständige 2026",
+  "WKO – Gewerbliche SV-Beiträge (aktuell)",
+  "Forvis Mazars – Personalverrechnungswerte 2026",
+  "finanz.at – Pensionistenabsetzbetrag",
+  "finanzinfo.at – Einkommensteuer",
+  "raisin.com – Einkommensteuer",
+  "selbststaendig-machen.at – SVS-Beiträge"
+ ],
+ "fehler": [],
+ "werte": {
+  "pab": {
+   "wert": 1020.0,
+   "jahr_ok": true,
+   "kontext": "finanz.at – Pensionistenabsetzbetrag: …Pensionistenabsetzbetrag höchstens 1.020 Euro, der erhöhte Pensionistenabsetzbetrag höchst…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "pab_von": {
+   "wert": 21614.0,
+   "jahr_ok": true,
+   "kontext": "Forvis Mazars – Personalverrechnungswerte 2026: …Pensionistenabsetzbetrag (jährlich): € 1.020,00 (Einschleifgrenzen: € 21.614,00 bis € 31.494,00), erhöhter Pensionistenabsetzbetr…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "pab_bis": {
+   "wert": 31494.0,
+   "jahr_ok": true,
+   "kontext": "finanz.at – Pensionistenabsetzbetrag: …bsetzbetrag senkt die Lohnsteuer auf die Pension. Er beträgt 2026 bis zu 1.020 Euro (2027: 1.044 Euro) und steht bei Pensionseinkünften bis 31.494 Euro im Jahr automatisch zu. Der erhöhte Pensioni…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "pab_erh": {
+   "wert": 1502.0,
+   "jahr_ok": true,
+   "kontext": "finanz.at – Pensionistenabsetzbetrag: …erhöhte Pensionistenabsetzbetrag höchstens 1.502 Euro. 2027 steigen die Beträge auf 1.044 Euro bzw…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "pab_erh_von": {
+   "wert": 24616.0,
+   "jahr_ok": true,
+   "kontext": "Forvis Mazars – Personalverrechnungswerte 2026: …erhöhter Pensionistenabsetzbetrag € 1.502,00 (Einschleifgrenzen: € 24.616,00 bis € 31.494,00). Lohnsteuertabelle 2026 Da si…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "pab_erh_bis": {
+   "wert": 31494.0,
+   "jahr_ok": true,
+   "kontext": "Forvis Mazars – Personalverrechnungswerte 2026: …erhöhter Pensionistenabsetzbetrag € 1.502,00 (Einschleifgrenzen: € 24.616,00 bis € 31.494,00). Lohnsteuertabelle 2026 Da sich aus dem Einko…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanz.at – Pensionistenabsetzbetrag"
+   ]
+  },
+  "svs_grenze": {
+   "wert": 6613.2,
+   "jahr_ok": true,
+   "kontext": "WKO – Beitragswesen Selbständige 2026: …Versicherungsgrenze (= Gewinn) - € 6.613,20 MBG € 551,10 € 6.613,20 Neue Selbständige…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026"
+   ]
+  },
+  "svs_mbgl": {
+   "wert": 6613.2,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Mindestbeitragsgrundlage 2026: 551,10 Euro pro Monat (6.613,20 Euro pro Jahr) Höchstbeitragsgrundlage 2026: 8.0…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026",
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "svs_hbgl": {
+   "wert": 97020.0,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Höchstbeitragsgrundlage 2026: 8.085 Euro pro Monat (97.020 Euro pro Jahr) Gesamt-Beitragssatz: 26,83 Prozen…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026",
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "svs_kv": {
+   "wert": 6.8,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Krankenversicherung 6,8 % der Beitragsgrundlage Gesundheitsversorgung, K…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026",
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "svs_pv": {
+   "wert": 18.5,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Pensionsversicherung 18,5 % der Beitragsgrundlage staatliche Pension Kran…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026",
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "svs_uv": {
+   "wert": 12.95,
+   "jahr_ok": true,
+   "kontext": "WKO – Beitragswesen Selbständige 2026: …Unfallversicherung monatlich Quartal jährlich Beiträge € 12,95 € 38,85 € 155,40 Höherversicherung Beiträge…",
+   "quellen": [
+    "WKO – Beitragswesen Selbständige 2026",
+    "WKO – Gewerbliche SV-Beiträge (aktuell)"
+   ]
+  },
+  "gfb_satz": {
+   "wert": 15.0,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …46.400 € steuerfrei Arbeitsplatzpauschale 2026: Homeoffice als Selbstständiger absetzen (1.200 oder 300 Euro) Basispauschalierung 2026: 15 Prozent, 63.000 Euro Grenze und wann sich der Wec…",
+   "quellen": [
+    "finanzinfo.at – Einkommensteuer",
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "gfb_max_gewinn": {
+   "wert": 33000.0,
+   "jahr_ok": false,
+   "kontext": "finanzinfo.at – Einkommensteuer: …Grundfreibetrag (15 % bis 33.000): -€ 4.950,00 - Investitionsfreibetrag (15 %):…",
+   "quellen": [
+    "finanzinfo.at – Einkommensteuer"
+   ]
+  },
+  "ba_basis": {
+   "wert": 15.0,
+   "jahr_ok": true,
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Basispauschalierung 2026: 15 Prozent, 63.000 Euro Grenze und wann sich der Wec…",
+   "quellen": [
+    "selbststaendig-machen.at – SVS-Beiträge"
+   ]
+  },
+  "est_grenze_1": {
+   "wert": 13539.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  },
+  "est_grenze_2": {
+   "wert": 21992.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  },
+  "est_grenze_3": {
+   "wert": 36458.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  },
+  "est_grenze_4": {
+   "wert": 70365.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  },
+  "est_grenze_5": {
+   "wert": 104859.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  },
+  "est_grenze_6": {
+   "wert": 1000000.0,
+   "jahr_ok": true,
+   "kontext": "WKO – Einkommensteuer & Absetzbeträge 2026: …Grenzsteuersatz in % < 13.539 0 0 0 > 13.539 bis 21.992 (Einkommen –…",
+   "quellen": [
+    "WKO – Einkommensteuer & Absetzbeträge 2026",
+    "Forvis Mazars – Personalverrechnungswerte 2026",
+    "finanzinfo.at – Einkommensteuer",
+    "raisin.com – Einkommensteuer"
+   ]
+  }
+ }
+}
