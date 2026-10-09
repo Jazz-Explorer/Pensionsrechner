@@ -1,0 +1,1602 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Pensionsrechner Österreich</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: Arbeitsfläche wie ein Formular – Eingaben links, Ergebnis rechts; schmal: untereinander */
+:root {
+  --bg: #eef2f4; --surface: #ffffff; --surface2: #f6f8f9; --ink: #16242c; --muted: #5a6a74; --line: #d3dce1;
+  --accent: #1e5d78; --accent-ink: #ffffff; --accent-soft: #e2eef3;
+  --ok: #1d7343; --ok-bg: #e5f4ea; --warn: #9a5a00; --warn-bg: #fdf1dc; --bad: #ad2a1f; --bad-bg: #fbe6e3;
+  --info: #1e5d78; --info-bg: #e6f0f5; --tip-bg: #1f2d35; --tip-ink: #f1f5f7;
+  --c-netto: #1d7343; --c-svs: #ad2a1f; --c-est: #2c62b8; --shade: rgba(173, 42, 31, .10);
+  --f-ui: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e171c; --surface: #15212a; --surface2: #1a2832; --ink: #e2eaee; --muted: #93a6b1; --line: #2a3b46;
+  --accent: #6fb6d3; --accent-ink: #0a1a22; --accent-soft: #1b3442;
+  --ok: #62c58e; --ok-bg: #16301f; --warn: #e3a64c; --warn-bg: #33270f; --bad: #f08076; --bad-bg: #3a1a17;
+  --info: #7cc0dc; --info-bg: #142c38; --tip-bg: #e9eff2; --tip-ink: #13202a;
+  --c-netto: #62c58e; --c-svs: #f08076; --c-est: #82a9ee; --shade: rgba(240, 128, 118, .14); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e171c; --surface: #15212a; --surface2: #1a2832; --ink: #e2eaee; --muted: #93a6b1; --line: #2a3b46;
+  --accent: #6fb6d3; --accent-ink: #0a1a22; --accent-soft: #1b3442;
+  --ok: #62c58e; --ok-bg: #16301f; --warn: #e3a64c; --warn-bg: #33270f; --bad: #f08076; --bad-bg: #3a1a17;
+  --info: #7cc0dc; --info-bg: #142c38; --tip-bg: #e9eff2; --tip-ink: #13202a;
+  --c-netto: #62c58e; --c-svs: #f08076; --c-est: #82a9ee; --shade: rgba(240, 128, 118, .14); color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--f-ui); }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0 }
+h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -.01em }
+h2 { font-size: 1.05rem; font-weight: 700 }
+h3 { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted) }
+a { color: var(--accent) }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+.small { font-size: .85rem }
+
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-block: 6px 12px }
+header.top .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; padding: 3px 10px; border-radius: 99px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--muted) }
+.chip b { color: var(--ink); font-weight: 600 }
+.chip.ok { background: var(--ok-bg); border-color: transparent; color: var(--ok) }
+.chip.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn) }
+.chip.bad { background: var(--bad-bg); border-color: transparent; color: var(--bad) }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; border-radius: var(--r);
+  margin-bottom: 12px; font-weight: 600 }
+.banner.warn { background: var(--warn-bg); color: var(--warn) }
+.banner.bad { background: var(--bad-bg); color: var(--bad) }
+.banner .txt { flex: 1 1 320px; min-width: 0 }
+.banner .txt div + div { font-weight: 500 }
+
+nav.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-bottom: 16px }
+nav.tabs button { appearance: none; border: 0; background: none; font: inherit; font-weight: 600; color: var(--muted);
+  padding: 10px 14px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap }
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent) }
+nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px }
+
+.grid-calc { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 860px) { .grid-calc { grid-template-columns: minmax(0, 1fr) } }
+.stack { display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+
+fieldset.box { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 10px 14px 12px; margin: 0; min-width: 0 }
+fieldset.box legend { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); padding: 0 6px }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) 118px 50px; align-items: center; gap: 4px 8px; padding-block: 3px }
+.row label { min-width: 0 }
+.row .unit { font-size: .8rem; color: var(--muted) }
+.row.full { grid-template-columns: minmax(0, 1fr) }
+.row.dis { opacity: .45 }
+input[type=text], select, textarea { font: inherit; color: var(--ink); background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 8px; width: 100%; min-width: 0 }
+input.zahl { text-align: right; font-family: var(--f-num); font-variant-numeric: tabular-nums }
+input.fehler { border-color: var(--bad); background: var(--bad-bg) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px }
+select { padding: 5px 6px }
+.check { display: flex; gap: 8px; align-items: flex-start; padding-block: 3px; cursor: pointer }
+.check input { margin-top: 3px; accent-color: var(--accent) }
+.check.ein { padding-left: 24px }
+.check.dis { opacity: .45; cursor: default }
+.hint { font-size: .82rem; color: var(--muted); padding-top: 2px }
+
+button.btn { font: inherit; font-size: .9rem; font-weight: 600; border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink) }
+button.btn:hover { border-color: var(--accent) }
+button.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+button.btn.klein { font-size: .8rem; padding: 3px 8px }
+button.btn:disabled { opacity: .5; cursor: default }
+.btns { display: flex; flex-wrap: wrap; gap: 6px }
+
+/* Ergebnis */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px }
+.tile .k { font-size: .78rem; color: var(--muted); font-weight: 600 }
+.tile .v { font: 600 1.45rem/1.2 var(--f-num); font-variant-numeric: tabular-nums; margin-top: 2px }
+.tile .s { font-size: .78rem; color: var(--muted) }
+.tile.haupt { border-color: var(--ok); }
+.tile.haupt .v { color: var(--ok) }
+.meldung { padding: 9px 12px; border-radius: var(--r); font-size: .9rem }
+.meldung.rot { background: var(--bad-bg); color: var(--bad); font-weight: 600 }
+.meldung.orange { background: var(--warn-bg); color: var(--warn); font-weight: 600 }
+.meldung.info { background: var(--info-bg); color: var(--info) }
+.bericht { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.bericht table { width: 100%; border-collapse: collapse }
+.bericht th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent);
+  padding: 12px 14px 4px; background: var(--surface) }
+.bericht td { padding: 3px 14px; border-top: 1px solid var(--surface2); vertical-align: top }
+.bericht td.w { text-align: right; white-space: nowrap; font-family: var(--f-num); font-variant-numeric: tabular-nums }
+.bericht td.x { color: var(--muted); font-size: .82rem; width: 34% }
+.bericht tr.fett td { font-weight: 700 }
+.bericht tr.gross td { font-weight: 700; font-size: 1.05rem; color: var(--ok) }
+.bericht tr[data-tip] td:first-child { text-decoration: underline dotted var(--line); text-underline-offset: 3px; cursor: help }
+@media (max-width: 560px) { .bericht td.x { display: none } }
+
+/* Tabelle */
+.tabwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r) }
+table.daten { border-collapse: collapse; width: 100%; font-size: .86rem }
+table.daten th { position: sticky; top: 0; background: var(--surface); text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line);
+  font-size: .75rem; color: var(--muted); white-space: nowrap; cursor: help }
+table.daten td { padding: 4px 10px; text-align: right; white-space: nowrap; font-family: var(--f-num); font-variant-numeric: tabular-nums }
+table.daten td.st { font-family: var(--f-ui); text-align: center }
+table.daten tr.s-unter, table.daten tr.s-befreit { background: var(--info-bg) }
+table.daten tr.s-unguenstig { background: var(--bad-bg) }
+table.daten tr.s-mindest { background: var(--warn-bg) }
+table.daten tr.s-ok { background: var(--ok-bg) }
+.legende { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem }
+.legende span { padding: 2px 8px; border-radius: 4px }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px }
+.chart svg { display: block; width: 100%; height: auto; max-width: 100% }
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 10px }
+.toolbar label { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: 2px }
+.toolbar input { width: 100px }
+
+/* Parameter */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 12px; align-items: start }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) 110px 62px; gap: 6px; align-items: center; padding-block: 2px }
+.prow .std { grid-column: 1 / -1; font-size: .75rem; color: var(--muted); margin-top: -3px; display: none }
+.prow.geaendert input { border-color: var(--warn) }
+.prow.geaendert .std { display: block }
+
+/* Werte prüfen */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-width: 0 }
+.ampel { padding: 8px 12px; border-radius: 6px; font-weight: 700 }
+.ampel.gruen { background: var(--ok-bg); color: var(--ok) }
+.ampel.gelb { background: var(--warn-bg); color: var(--warn) }
+.ampel.rot { background: var(--bad-bg); color: var(--bad) }
+ul.meld { margin: 8px 0 0; padding-left: 18px }
+ul.meld li.rot { color: var(--bad) } ul.meld li.gelb { color: var(--warn) }
+.quellen { display: grid; gap: 4px; margin: 6px 0 }
+.quellen a { display: block; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; text-decoration: none; background: var(--surface2) }
+.quellen a b { color: var(--ink) } .quellen a span { display: block; font-size: .78rem; color: var(--muted); overflow-wrap: anywhere }
+textarea { min-height: 120px; resize: vertical; font-size: .85rem }
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start }
+
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(10, 20, 26, .55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50 }
+.modal .fenster { background: var(--surface); color: var(--ink); border-radius: 10px; width: min(1100px, 100%); max-height: 92%; display: flex; flex-direction: column; overflow: hidden }
+.modal .kopf { padding: 14px 16px 8px; border-bottom: 1px solid var(--line) }
+.modal .inhalt { padding: 10px 16px; overflow: auto; flex: 1 1 auto; min-height: 0 }
+.modal .fuss { padding: 10px 16px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.modal .fuss .rechts { margin-left: auto; display: flex; gap: 8px }
+table.vgl { border-collapse: collapse; width: 100%; font-size: .85rem }
+table.vgl th { text-align: left; font-size: .72rem; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+table.vgl td { padding: 4px 8px; border-bottom: 1px solid var(--surface2) }
+table.vgl td.w { text-align: right; font-family: var(--f-num); white-space: nowrap }
+table.vgl tr.abw { background: var(--warn-bg) }
+table.vgl tr.gleich { color: var(--muted) }
+table.vgl tr.sel { outline: 2px solid var(--accent); outline-offset: -2px }
+.fund { background: var(--surface2); border-radius: 6px; padding: 8px 10px; font-size: .82rem; margin-top: 8px; overflow-wrap: anywhere }
+
+/* Hilfe */
+.hilfe { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; align-items: start }
+@media (max-width: 760px) { .hilfe { grid-template-columns: minmax(0, 1fr) } .hilfe nav { position: static !important } }
+.hilfe nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); display: flex; flex-direction: column; gap: 2px; font-size: .88rem }
+.hilfe nav a { text-decoration: none; padding: 4px 8px; border-radius: 4px; color: var(--muted) }
+.hilfe nav a:hover { background: var(--accent-soft); color: var(--accent) }
+.hilfe article { max-width: 72ch }
+.hilfe article h2 { margin: 26px 0 8px; scroll-margin-top: 12px }
+.hilfe article p, .hilfe article li { margin: 6px 0 }
+.hilfe .box { background: var(--info-bg); color: var(--info); padding: 8px 12px; border-radius: 6px }
+
+/* Hilfeblase */
+#tip { position: fixed; z-index: 100; max-width: min(420px, calc(100vw - 24px)); background: var(--tip-bg); color: var(--tip-ink);
+  font-size: .82rem; line-height: 1.4; padding: 8px 10px; border-radius: 6px; pointer-events: none; white-space: pre-line;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .25) }
+.i { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line);
+  font-size: .7rem; color: var(--muted); cursor: help; margin-left: 4px; vertical-align: 1px; flex: none }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  background: var(--tip-bg); color: var(--tip-ink); padding: 9px 16px; border-radius: 99px; font-size: .88rem; z-index: 120 }
+@media (prefers-reduced-motion: no-preference) { .toast { transition: opacity .3s } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pensionsrechner Österreich</h1>
+      <div class="muted small">Alterspension + selbständiger Zuverdienst · Neuer Selbständiger oder Gewerbe (GSVG)</div>
+    </div>
+    <div class="chips">
+      <span class="chip" id="chipJahr" data-tip="Für dieses Jahr gelten die eingestellten Rechenwerte.">Werte <b id="chipJahrW">2026</b></span>
+      <span class="chip" id="chipStatus" data-tip="Ergebnis der Gültigkeitsprüfung – Details im Reiter „Werte prüfen“.">Werte geprüft</span>
+      <span class="chip" id="chipSpeicher" data-tip="">lokal gespeichert</span>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden>
+    <div class="txt" id="bannerTxt"></div>
+    <button class="btn primary" id="bannerPruefen" type="button">Jetzt prüfen / aktualisieren</button>
+    <button class="btn" id="bannerSpaeter" type="button">In 7 Tagen erinnern</button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" type="button" data-tab="berechnung" aria-selected="true">Berechnung</button>
+    <button role="tab" type="button" data-tab="tabelle" aria-selected="false">Tabelle &amp; Diagramm</button>
+    <button role="tab" type="button" data-tab="parameter" aria-selected="false">Parameter</button>
+    <button role="tab" type="button" data-tab="werte" aria-selected="false">Werte prüfen &amp; Historie</button>
+    <button role="tab" type="button" data-tab="hilfe" aria-selected="false">Hilfe</button>
+  </nav>
+
+  <!-- ============================ BERECHNUNG ============================ -->
+  <section id="tab-berechnung" class="grid-calc">
+    <form class="stack" id="eingabe" autocomplete="off">
+      <fieldset class="box">
+        <legend>Tätigkeit &amp; Sozialversicherung</legend>
+        <label class="check" data-tip="Neuer Selbständiger: selbständige Tätigkeit OHNE Gewerbeschein (z. B. Vortragende, Trainer, Autoren, Künstler, Gutachter). SVS-Beiträge erst ab 6.613,20 € Gewinn pro Jahr."><input type="radio" name="gewerbe" id="gewerbe0" value="0"> Neuer Selbständiger – kein Gewerbeschein</label>
+        <label class="check" data-tip="Gewerbetreibender: Tätigkeit MIT Gewerbeschein, z. B. IT-Dienstleistung, IT-Consulting, Unternehmensberatung, Handel, Handwerk. Pflichtversichert nach GSVG ab dem Gewerbeschein, WKO-Mitglied."><input type="radio" name="gewerbe" id="gewerbe1" value="1"> Gewerbetreibender – Gewerbeschein (GSVG)</label>
+        <label class="check ein" id="lbl_gsvg_befreiung" data-tip="Kleinunternehmer-Ausnahme (nur Gewerbe): Wer eine Alterspension bezieht, kann sich von Kranken- und Pensionsversicherung befreien lassen, wenn Umsatz ≤ 55.000 € UND Gewinn ≤ 6.613,20 € im Jahr. Muss bei der SVS BEANTRAGT werden. Unfallversicherung bleibt."><input type="checkbox" id="gsvg_befreiung"> Befreiung KV/PV beantragt (Kleinunternehmer)</label>
+        <label class="check" data-tip="Wer erstmals nach GSVG versichert ist: In den ersten 2 Kalenderjahren wird die KV-Beitragsgrundlage nicht nachbemessen (bleibt auf der Mindestbeitragsgrundlage). Ab Jahr 3 KV auf den tatsächlichen Gewinn."><input type="checkbox" id="neugruender"> Neugründer: KV Jahr 1–2 fix auf Mindestbasis</label>
+        <label class="check" id="lbl_svs_uv_an" data-tip="Unfallversicherung 12,95 € pro Monat (fix). Bei Gewerbetreibenden immer Pflicht."><input type="checkbox" id="svs_uv_an"> Unfallversicherung (12,95 €/Monat)</label>
+        <label class="check" data-tip="Selbständigenvorsorge („Abfertigung neu“) 1,53 % der Beitragsgrundlage – Pflicht, sobald man in der KV pflichtversichert ist."><input type="checkbox" id="svs_sv_an"> Selbständigenvorsorge 1,53 %</label>
+        <label class="check" data-tip="Bei Mehrfachversicherung zählt die Bruttopension in der Krankenversicherung zur Höchstbeitragsgrundlage (97.020 €) mit. Nur bei hohen Beträgen relevant."><input type="checkbox" id="hbgl_mehrfach"> Pension auf KV-Höchstbeitragsgrundlage anrechnen</label>
+        <div class="hint"><a href="#h-gewerbe" data-hilfe="h-gewerbe">Gewerbeschein – ja oder nein? Was trifft auf mich zu?</a></div>
+      </fieldset>
+
+      <fieldset class="box">
+        <legend>Pension (reguläre Alterspension)</legend>
+        <div class="row full" data-tip="Wie wollen Sie die Pension eingeben?&#10;• Brutto/Monat laut Pensionsbescheid (14× pro Jahr)&#10;• Brutto/Jahr (Summe aller 14 Bezüge)&#10;• Netto/Monat laut Kontoauszug – Brutto wird zurückgerechnet">
+          <select id="pension_modus" aria-label="Eingabeart Pension">
+            <option value="brutto_monat">Brutto pro Monat (14× jährlich)</option>
+            <option value="brutto_jahr">Brutto pro Jahr (gesamt)</option>
+            <option value="netto_monat">Netto pro Monat (wird zurückgerechnet)</option>
+          </select>
+        </div>
+        <div class="row" data-tip="Betrag der Pension laut gewählter Eingabeart. Komma oder Punkt als Dezimalzeichen möglich.">
+          <label for="pension_betrag">Pension</label><input type="text" inputmode="decimal" class="zahl" id="pension_betrag"><span class="unit" id="u_pension">€/Mon.</span>
+        </div>
+        <div class="hint" id="pensionInfo"></div>
+        <label class="check" data-tip="Erhöhter Pensionistenabsetzbetrag (1.502 € statt 1.020 €): nur bei Ehe/Partnerschaft, wenn der Partner max. 2.720 €/Jahr verdient und kein Alleinverdienerabsetzbetrag zusteht."><input type="checkbox" id="erh_pab"> Erhöhter Pensionistenabsetzbetrag</label>
+        <label class="check" data-tip="Veranlagungsfreibetrag: Neben einer Pension bleiben Zuverdienst-Einkünfte bis 730 € steuerfrei (eingeschliffen bis 1.460 €)."><input type="checkbox" id="vfb_an"> Veranlagungsfreibetrag (730 €) berücksichtigen</label>
+      </fieldset>
+
+      <fieldset class="box">
+        <legend>Zuverdienst</legend>
+        <div class="row full" data-tip="Wie wollen Sie den Zuverdienst angeben?&#10;• Stundensatz × Stunden/Woche × Wochen&#10;• Jahres- oder Monatsumsatz&#10;• Gewinn direkt (Einnahmen minus alle Ausgaben, vor SVS)">
+          <select id="zuv_modus" aria-label="Eingabeart Zuverdienst">
+            <option value="stunden">Stundensatz × Stunden × Wochen</option>
+            <option value="umsatz_jahr">Jahresumsatz</option>
+            <option value="umsatz_monat">Monatsumsatz (× 12)</option>
+            <option value="gewinn_jahr">Gewinn vor SVS direkt (Jahr)</option>
+          </select>
+        </div>
+        <div class="row" data-z="stunden" data-tip="Ihr Honorar pro Stunde OHNE Umsatzsteuer. Als Kleinunternehmer (bis 55.000 € Umsatz) einfach der verrechnete Betrag."><label for="stundensatz">Stundensatz (ohne USt)</label><input type="text" inputmode="decimal" class="zahl" id="stundensatz"><span class="unit">€/h</span></div>
+        <div class="row" data-z="stunden" data-tip="Durchschnittliche verrechenbare Stunden pro Arbeitswoche."><label for="std_woche">Stunden pro Woche</label><input type="text" inputmode="decimal" class="zahl" id="std_woche"><span class="unit">h</span></div>
+        <div class="row" data-z="stunden" data-tip="Arbeitswochen pro Jahr (52 minus Urlaub, Feiertage, Krankheit) – typisch 44–48."><label for="wochen">Arbeitswochen pro Jahr</label><input type="text" inputmode="decimal" class="zahl" id="wochen"><span class="unit">Wo.</span></div>
+        <div class="row" data-z="umsatz_jahr" data-tip="Summe aller Honorare im Jahr (ohne Umsatzsteuer)."><label for="umsatz_jahr">Jahresumsatz</label><input type="text" inputmode="decimal" class="zahl" id="umsatz_jahr"><span class="unit">€</span></div>
+        <div class="row" data-z="umsatz_monat" data-tip="Durchschnittliches Honorar pro Monat – wird × 12 gerechnet."><label for="umsatz_monat">Monatsumsatz</label><input type="text" inputmode="decimal" class="zahl" id="umsatz_monat"><span class="unit">€</span></div>
+        <div class="row" data-z="gewinn_jahr" data-tip="Gewinn = Einnahmen minus alle Betriebsausgaben, aber VOR Abzug der SVS-Beiträge. Betriebsausgaben-Felder werden dann nicht verwendet."><label for="gewinn_jahr">Gewinn vor SVS</label><input type="text" inputmode="decimal" class="zahl" id="gewinn_jahr"><span class="unit">€</span></div>
+      </fieldset>
+
+      <fieldset class="box" id="boxBA">
+        <legend>Betriebsausgaben</legend>
+        <div class="row full" data-tip="Wie werden die Betriebsausgaben ermittelt?&#10;• Tatsächliche Ausgaben (€/Jahr, €/Monat oder % vom Umsatz)&#10;• Basispauschalierung 15 % (ab 2026)&#10;• Kleinunternehmerpauschalierung 20 % (Dienstleistung) bzw. 45 %&#10;SVS-Beiträge sind immer zusätzlich absetzbar.">
+          <select id="ba_modus" aria-label="Art der Betriebsausgaben">
+            <option value="betrag_jahr">Tatsächliche Ausgaben € / Jahr</option>
+            <option value="betrag_monat">Tatsächliche Ausgaben € / Monat</option>
+            <option value="prozent">Prozent vom Umsatz</option>
+            <option value="basis">Basispauschalierung (15 %)</option>
+            <option value="ku_dl">KU-Pauschalierung Dienstleistung (20 %)</option>
+            <option value="ku_sonst">KU-Pauschalierung sonstige (45 %)</option>
+          </select>
+        </div>
+        <div class="row" data-b="betrag" data-tip="Summe der tatsächlichen Ausgaben: z. B. Laptop/Software (AfA), Internet, Fahrtkosten, Fachliteratur, Fortbildung, Steuerberatung."><label for="ba_betrag">Betriebsausgaben</label><input type="text" inputmode="decimal" class="zahl" id="ba_betrag"><span class="unit" id="u_ba">€/Jahr</span></div>
+        <div class="row" data-b="prozent" data-tip="Betriebsausgaben als Prozentsatz vom Umsatz."><label for="ba_prozent">Ausgaben in % vom Umsatz</label><input type="text" inputmode="decimal" class="zahl" id="ba_prozent"><span class="unit">%</span></div>
+        <div class="row" data-b="pausch" data-tip="Neben der Pauschale zusätzlich absetzbar: z. B. Wareneinkauf, Löhne, Fremdleistungen (nur Basispauschalierung)."><label for="zus_ausgaben">Zusätzlich absetzbar (Pausch.)</label><input type="text" inputmode="decimal" class="zahl" id="zus_ausgaben"><span class="unit">€</span></div>
+      </fieldset>
+
+      <fieldset class="box">
+        <legend>Szenarien &amp; Export</legend>
+        <div class="row full" data-tip="Name eines Szenarios eingeben oder aus der Liste wählen.">
+          <input type="text" id="szenarioName" list="szenarioListe" placeholder="Name des Szenarios" aria-label="Name des Szenarios">
+          <datalist id="szenarioListe"></datalist>
+        </div>
+        <div class="btns" style="margin-top:6px">
+          <button class="btn klein" type="button" id="szSpeichern" data-tip="Speichert alle aktuellen Eingaben unter dem Namen.">Speichern</button>
+          <button class="btn klein" type="button" id="szLaden" data-tip="Lädt das gewählte Szenario.">Laden</button>
+          <button class="btn klein" type="button" id="szLoeschen" data-tip="Löscht das gewählte Szenario.">Löschen</button>
+          <button class="btn klein" type="button" id="berichtExport" data-tip="Speichert das Ergebnis samt Warnungen als Textdatei.">Bericht als Text</button>
+          <button class="btn klein" type="button" id="eingabenStandard" data-tip="Setzt alle Eingaben auf die Beispielwerte zurück (Parameter bleiben).">Beispielwerte</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="stack" id="ergebnis" aria-live="polite">
+      <div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline">
+        <h2 id="ergTitel">Ergebnis 2026</h2><span class="muted small" id="ergArt"></span>
+        <span class="muted small" style="margin-left:auto">Maus über eine Zeile → Erklärung</span>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="stack" id="warnungen"></div>
+      <div class="bericht"><table id="bericht"></table></div>
+      <div class="stack" id="hinweise"></div>
+    </div>
+  </section>
+
+  <!-- ============================ TABELLE ============================ -->
+  <section id="tab-tabelle" hidden>
+    <div class="toolbar">
+      <h2 id="tabTitel" style="flex:1 1 100%">Variation Stunden/Woche</h2>
+      <label data-tip="Startwert der Tabelle (Stunden/Woche bzw. Umsatz).">Von<input type="text" inputmode="decimal" class="zahl" id="tabVon"></label>
+      <label data-tip="Endwert der Tabelle.">Bis<input type="text" inputmode="decimal" class="zahl" id="tabBis"></label>
+      <label data-tip="Schrittweite zwischen den Zeilen.">Schritt<input type="text" inputmode="decimal" class="zahl" id="tabSchritt"></label>
+      <button class="btn" type="button" id="csvExport" data-tip="Tabelle als CSV-Datei für Excel speichern (Strichpunkt, Dezimalkomma).">CSV exportieren</button>
+      <div class="legende" style="margin-left:auto">
+        <span style="background:var(--info-bg)">unter Grenze / befreit</span><span style="background:var(--bad-bg)">ungünstig</span>
+        <span style="background:var(--warn-bg)">Mindestbeitrag</span><span style="background:var(--ok-bg)">lohnend</span>
+      </div>
+    </div>
+    <div class="chart" data-tip="Grün: Netto-Zuverdienst pro Jahr · Rot: SVS · Blau: Mehrsteuer. Rosa Fläche = ungünstiger Bereich knapp über der Grenze."><svg id="diagramm" viewBox="0 0 1000 320" role="img" aria-label="Diagramm Netto-Zuverdienst, SVS und Mehrsteuer"></svg></div>
+    <div class="tabwrap" style="margin-top:12px"><table class="daten" id="datentabelle"></table></div>
+  </section>
+
+  <!-- ============================ PARAMETER ============================ -->
+  <section id="tab-parameter" hidden>
+    <div class="toolbar">
+      <div style="flex:1 1 320px"><h2>Rechenwerte</h2><div class="muted small">Alle Werte sind einstellbar. Beim Speichern wird der bisherige Stand automatisch in der Historie gesichert.</div></div>
+      <button class="btn primary" type="button" id="paramSpeichern" data-tip="Übernimmt die geänderten Werte. Der bisherige Stand kommt in die Historie.">Übernehmen &amp; speichern</button>
+      <button class="btn" type="button" id="paramVerwerfen" data-tip="Verwirft nicht gespeicherte Änderungen in diesem Reiter.">Änderungen verwerfen</button>
+      <button class="btn" type="button" id="paramStandard" data-tip="Setzt alle Parameter auf die eingebauten Werte 2026 zurück (vorher Sicherung in der Historie).">Standardwerte 2026</button>
+      <button class="btn" type="button" id="paramZuWerte" data-tip="Prüfen, aktualisieren, Historie.">Werte prüfen &amp; Historie</button>
+    </div>
+    <div class="pgrid" id="paramGrid"></div>
+  </section>
+
+  <!-- ============================ WERTE PRÜFEN ============================ -->
+  <section id="tab-werte" hidden>
+    <div class="cols2">
+      <div class="card stack">
+        <h2>Status der Rechenwerte</h2>
+        <div class="ampel" id="ampel"></div>
+        <div class="small muted" id="standInfo"></div>
+        <ul class="meld" id="meldungen"></ul>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) 90px 0"><label for="paramJahr">Werte gelten für Jahr</label><input type="text" inputmode="numeric" class="zahl" id="paramJahr"><span></span></div>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) 90px 0" data-tip="Nach so vielen Tagen ohne Prüfung erscheint der Hinweisbalken."><label for="pruefIntervall">Prüfintervall (Tage)</label><input type="text" inputmode="numeric" class="zahl" id="pruefIntervall"><span></span></div>
+        <div class="btns"><button class="btn primary" type="button" id="alsGeprueft" data-tip="Speichert das heutige Datum als Prüfdatum.">✔ Werte sind geprüft und aktuell</button></div>
+      </div>
+
+      <div class="card stack">
+        <h2>Aktuelle Werte ermitteln</h2>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) 90px 0" data-tip="Für welches Jahr sollen Werte gesucht werden? Zahlen, bei denen ein anderes Jahr steht, werden verworfen."><label for="zieljahr">Werte suchen für Jahr</label><input type="text" inputmode="numeric" class="zahl" id="zieljahr"><span></span></div>
+        <div class="small">1. Quelle öffnen (neuer Tab) · 2. dort <b>Strg+A</b>, <b>Strg+C</b> · 3. hier einfügen · 4. „Werte ermitteln“. Sie können auch mehrere Seiten nacheinander einfügen.</div>
+        <div class="quellen" id="quellenListe"></div>
+        <textarea id="seitenText" placeholder="Seitentext hier einfügen (Strg+V) …" aria-label="Eingefügter Seitentext"></textarea>
+        <div class="btns">
+          <button class="btn primary" type="button" id="textAuswerten" data-tip="Sucht die Werte im eingefügten Text und zeigt sie mit Fundstelle. Übernommen wird nur, was Sie bestätigen.">Werte ermitteln</button>
+          <button class="btn" type="button" id="textLeeren">Text leeren</button>
+        </div>
+        <h3 style="margin-top:6px">Weitere Möglichkeiten</h3>
+        <div class="btns">
+          <label class="btn" style="display:inline-block" data-tip="Parameterdatei (.json) laden – z. B. aus der EXE exportiert.">Parameterdatei importieren…<input type="file" id="importDatei" accept=".json,application/json" hidden></label>
+          <button class="btn" type="button" id="exportDatei" data-tip="Speichert die aktuellen Werte als Parameterdatei – auch in der EXE importierbar.">Werte exportieren</button>
+          <button class="btn" type="button" id="vglStandard" data-tip="Vergleicht mit den eingebauten Werten 2026 und übernimmt die gewählten.">Eingebaute Werte 2026</button>
+        </div>
+        <div class="small muted">Websuche nach Thema: <span id="themenSuche"></span></div>
+      </div>
+    </div>
+
+    <div class="card stack" style="margin-top:16px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <h2 style="flex:1 1 200px">Historie der Rechenwerte</h2>
+        <input type="text" id="sicherKommentar" placeholder="Kommentar (optional)" style="width:220px" aria-label="Kommentar zur Sicherung">
+        <button class="btn" type="button" id="standSichern" data-tip="Legt die jetzigen Werte mit Kommentar in der Historie ab, ohne etwas zu ändern.">Aktuellen Stand sichern</button>
+      </div>
+      <div class="small muted">Bei jeder Änderung der Werte (manuell, aus Seitentext, Parameterdatei, Zurücksetzen, Wiederherstellen) wird der bisherige Stand hier gesichert. Ein Eintrag enthält die Werte VOR der genannten Änderung.</div>
+      <div class="tabwrap"><table class="vgl" id="historie"></table></div>
+    </div>
+  </section>
+
+  <!-- ============================ HILFE ============================ -->
+  <section id="tab-hilfe" hidden>
+    <div class="hilfe">
+      <nav id="hilfeNav" aria-label="Inhalt der Hilfe"></nav>
+      <article id="hilfeText"></article>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="fenster" role="dialog" aria-modal="true" aria-labelledby="modalTitel">
+    <div class="kopf"><h2 id="modalTitel"></h2><div class="small muted" id="modalInfo" style="margin-top:4px"></div></div>
+    <div class="inhalt" id="modalInhalt"></div>
+    <div class="fuss" id="modalFuss"></div>
+  </div>
+</div>
+<div id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   RECHENKERN (identisch mit berechnung.py der EXE)
+   ===================================================================== */
+const PARAMETER_DEF = [
+  ["est_grenze_1","Einkommensteuer-Tarif","Tarifstufe 1 bis",13539,"€"],
+  ["est_grenze_2","Einkommensteuer-Tarif","Tarifstufe 2 bis",21992,"€"],
+  ["est_grenze_3","Einkommensteuer-Tarif","Tarifstufe 3 bis",36458,"€"],
+  ["est_grenze_4","Einkommensteuer-Tarif","Tarifstufe 4 bis",70365,"€"],
+  ["est_grenze_5","Einkommensteuer-Tarif","Tarifstufe 5 bis",104859,"€"],
+  ["est_grenze_6","Einkommensteuer-Tarif","Tarifstufe 6 bis",1000000,"€"],
+  ["est_satz_1","Einkommensteuer-Tarif","Steuersatz Stufe 1",0,"%"],
+  ["est_satz_2","Einkommensteuer-Tarif","Steuersatz Stufe 2",20,"%"],
+  ["est_satz_3","Einkommensteuer-Tarif","Steuersatz Stufe 3",30,"%"],
+  ["est_satz_4","Einkommensteuer-Tarif","Steuersatz Stufe 4",40,"%"],
+  ["est_satz_5","Einkommensteuer-Tarif","Steuersatz Stufe 5",48,"%"],
+  ["est_satz_6","Einkommensteuer-Tarif","Steuersatz Stufe 6",50,"%"],
+  ["est_satz_7","Einkommensteuer-Tarif","Steuersatz darüber",55,"%"],
+  ["gfb_satz","Freibeträge","Grundfreibetrag (Gewinnfreibetrag)",15,"%"],
+  ["gfb_max_gewinn","Freibeträge","Grundfreibetrag max. Gewinn",33000,"€"],
+  ["vfb_grenze","Freibeträge","Veranlagungsfreibetrag bis",730,"€"],
+  ["vfb_ende","Freibeträge","Veranlagungsfreibetrag eingeschliffen bis",1460,"€"],
+  ["pab","Pensionistenabsetzbetrag","Pensionistenabsetzbetrag",1020,"€/Jahr"],
+  ["pab_von","Pensionistenabsetzbetrag","Einschleifung ab Pensionseinkünften",21614,"€"],
+  ["pab_bis","Pensionistenabsetzbetrag","Einschleifung bis (= 0)",31494,"€"],
+  ["pab_erh","Pensionistenabsetzbetrag","Erhöhter Pensionistenabsetzbetrag",1502,"€/Jahr"],
+  ["pab_erh_von","Pensionistenabsetzbetrag","Erhöhter PAB: Einschleifung ab",24616,"€"],
+  ["pab_erh_bis","Pensionistenabsetzbetrag","Erhöhter PAB: Einschleifung bis",31494,"€"],
+  ["pension_anzahl","Pension","Pensionsbezüge pro Jahr",14,"×"],
+  ["pension_kv","Pension","KV-Beitrag von der Pension",6,"%"],
+  ["sz_freibetrag","Pension","Sonderzahlungen: Freibetrag",620,"€"],
+  ["sz_freigrenze","Pension","Sonderzahlungen: Freigrenze",2100,"€"],
+  ["sz_satz","Pension","Sonderzahlungen: Steuersatz",6,"%"],
+  ["sz_einschleif","Pension","Sonderzahlungen: Einschleifsatz über Freigrenze",30,"%"],
+  ["svs_grenze","SVS (Neue Selbständige)","Versicherungsgrenze (Gewinn)",6613.2,"€/Jahr"],
+  ["svs_kv","SVS (Neue Selbständige)","Krankenversicherung",6.8,"%"],
+  ["svs_pv","SVS (Neue Selbständige)","Pensionsversicherung",18.5,"%"],
+  ["svs_sv","SVS (Neue Selbständige)","Selbständigenvorsorge",1.53,"%"],
+  ["svs_uv","SVS (Neue Selbständige)","Unfallversicherung (fix)",12.95,"€/Monat"],
+  ["svs_hbgl","SVS (Neue Selbständige)","Höchstbeitragsgrundlage",97020,"€/Jahr"],
+  ["svs_mbgl","SVS (Neue Selbständige)","Mindestbeitragsgrundlage",6613.2,"€/Jahr"],
+  ["gsvg_ku_gewinn","Gewerbetreibende (GSVG)","Befreiung KV/PV: max. Gewinn",6613.2,"€/Jahr"],
+  ["gsvg_ku_umsatz","Gewerbetreibende (GSVG)","Befreiung KV/PV: max. Umsatz",55000,"€/Jahr"],
+  ["wko_grundumlage","Gewerbetreibende (GSVG)","WKO-Grundumlage",150,"€/Jahr"],
+  ["ba_basis","Betriebsausgaben","Basispauschalierung",15,"%"],
+  ["ba_basis_max_umsatz","Betriebsausgaben","Basispauschalierung max. Umsatz",420000,"€"],
+  ["ba_ku_dl","Betriebsausgaben","KU-Pauschalierung Dienstleistung",20,"%"],
+  ["ba_ku_sonst","Betriebsausgaben","KU-Pauschalierung sonstige",45,"%"],
+  ["ku_grenze","Betriebsausgaben","Kleinunternehmergrenze (USt/KU-Pausch.)",55000,"€"],
+  ["tab_von","Tabelle","Tabelle: Start (Std/Woche)",1,"h"],
+  ["tab_bis","Tabelle","Tabelle: Ende (Std/Woche)",30,"h"],
+  ["tab_schritt","Tabelle","Tabelle: Schrittweite (Std/Woche)",1,"h"],
+  ["tab_umsatz_von","Tabelle","Tabelle: Start (Umsatz)",2000,"€"],
+  ["tab_umsatz_bis","Tabelle","Tabelle: Ende (Umsatz)",60000,"€"],
+  ["tab_umsatz_schritt","Tabelle","Tabelle: Schrittweite (Umsatz)",2000,"€"],
+];
+const PARAMETER_STANDARD = Object.fromEntries(PARAMETER_DEF.map(d => [d[0], d[3]]));
+const DEF = Object.fromEntries(PARAMETER_DEF.map(d => [d[0], {gruppe: d[1], label: d[2], std: d[3], einheit: d[4]}]));
+const BA_MODI = {betrag_jahr: "Tatsächliche Ausgaben € / Jahr", betrag_monat: "Tatsächliche Ausgaben € / Monat",
+  prozent: "Prozent vom Umsatz", basis: "Basispauschalierung", ku_dl: "KU-Pauschalierung Dienstleistung", ku_sonst: "KU-Pauschalierung sonstige"};
+const EINGABEN_STANDARD = {
+  pension_modus: "brutto_monat", pension_betrag: 2000, zuv_modus: "stunden", stundensatz: 50, std_woche: 5, wochen: 46,
+  umsatz_jahr: 12000, umsatz_monat: 1000, gewinn_jahr: 10000, ba_modus: "betrag_jahr", ba_betrag: 1000, ba_prozent: 10,
+  zus_ausgaben: 0, erh_pab: false, gewerbe: false, gsvg_befreiung: true, neugruender: false,
+  svs_uv_an: true, svs_sv_an: true, hbgl_mehrfach: true, vfb_an: true,
+};
+const TATSAECHLICHE_BA = ["betrag_jahr", "betrag_monat", "prozent"];
+
+function tarifsteuer(e, p) {
+  if (e <= 0) return 0;
+  const grenzen = [1,2,3,4,5,6].map(i => p["est_grenze_" + i]).concat([Infinity]);
+  let st = 0, unten = 0;
+  for (let i = 0; i < 7; i++) {
+    const oben = grenzen[i];
+    if (e > unten) st += (Math.min(e, oben) - unten) * p["est_satz_" + (i + 1)] / 100;
+    unten = oben;
+  }
+  return st;
+}
+function grenzsteuersatz(e, p) {
+  for (let i = 1; i <= 6; i++) if (e <= p["est_grenze_" + i]) return p["est_satz_" + i];
+  return p.est_satz_7;
+}
+function pensionistenabsetzbetrag(pe, p, erh) {
+  if (pe <= 0) return 0;
+  const [betrag, von, bis] = erh ? [p.pab_erh, p.pab_erh_von, p.pab_erh_bis] : [p.pab, p.pab_von, p.pab_bis];
+  if (pe <= von) return betrag;
+  if (pe >= bis || bis <= von) return 0;
+  return betrag * (bis - pe) / (bis - von);
+}
+function sonderzahlungSteuer(bem, p) {
+  if (bem <= p.sz_freigrenze) return 0;
+  const normal = (bem - p.sz_freibetrag) * p.sz_satz / 100;
+  const einschleif = (bem - p.sz_freigrenze) * p.sz_einschleif / 100;
+  return Math.max(0, Math.min(normal, einschleif));
+}
+function veranlagungsfreibetrag(x, p) {
+  const g = p.vfb_grenze, e = p.vfb_ende;
+  if (x <= 0) return 0;
+  if (x <= g) return x;
+  if (x >= e) return 0;
+  return Math.max(0, g - (x - g) * g / (e - g));
+}
+function pensionAusBruttoMonat(monat, p, erh) {
+  const anzahl = p.pension_anzahl, lfdMonate = Math.min(anzahl, 12), szAnzahl = Math.max(0, anzahl - 12);
+  const lfd = monat * lfdMonate, sz = monat * szAnzahl, kv = p.pension_kv / 100;
+  const kvLfd = lfd * kv, kvSz = sz * kv, einkuenfte = lfd - kvLfd;
+  const pab = pensionistenabsetzbetrag(einkuenfte, p, erh);
+  const lstLfd = Math.max(0, tarifsteuer(einkuenfte, p) - pab);
+  const lstSz = sonderzahlungSteuer(sz - kvSz, p);
+  return { monat, lfd, sz, brutto: lfd + sz, kv: kvLfd + kvSz, einkuenfte, pab, lst_lfd: lstLfd, lst_sz: lstSz,
+    lst: lstLfd + lstSz, netto: lfd + sz - kvLfd - kvSz - lstLfd - lstSz,
+    netto_monat_lfd: lfdMonate ? (lfd - kvLfd - lstLfd) / lfdMonate : 0 };
+}
+function pensionBruttoAusNetto(nettoMonat, p, erh) {
+  if (nettoMonat <= 0) return 0;
+  let lo = nettoMonat, hi = nettoMonat * 3 + 1000;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (pensionAusBruttoMonat(mid, p, erh).netto_monat_lfd < nettoMonat) lo = mid; else hi = mid;
+  }
+  return Math.round((lo + hi) / 2 * 100) / 100;
+}
+function pensionBruttoMonat(e, p) {
+  const b = Math.max(0, e.pension_betrag);
+  if (e.pension_modus === "brutto_jahr") return p.pension_anzahl ? b / p.pension_anzahl : 0;
+  if (e.pension_modus === "netto_monat") return pensionBruttoAusNetto(b, p, e.erh_pab);
+  return b;
+}
+function umsatzAusEingaben(e) {
+  if (e.zuv_modus === "stunden") return Math.max(0, e.stundensatz * e.std_woche * e.wochen);
+  if (e.zuv_modus === "umsatz_monat") return Math.max(0, e.umsatz_monat * 12);
+  if (e.zuv_modus === "gewinn_jahr") return Math.max(0, e.gewinn_jahr);
+  return Math.max(0, e.umsatz_jahr);
+}
+function kammerumlage(e, p) { return (e.gewerbe && e.zuv_modus !== "gewinn_jahr") ? p.wko_grundumlage : 0; }
+function betriebsausgaben(u, e, p) {
+  if (e.zuv_modus === "gewinn_jahr") return 0;
+  const m = e.ba_modus, kammer = TATSAECHLICHE_BA.includes(m) ? kammerumlage(e, p) : 0;
+  const zus = Math.max(0, e.zus_ausgaben || 0);
+  switch (m) {
+    case "betrag_jahr": return e.ba_betrag + kammer;
+    case "betrag_monat": return e.ba_betrag * 12 + kammer;
+    case "prozent": return u * e.ba_prozent / 100 + kammer;
+    case "basis": return Math.min(u, p.ba_basis_max_umsatz) * p.ba_basis / 100 + zus;
+    case "ku_dl": return u * p.ba_ku_dl / 100 + zus;
+    case "ku_sonst": return u * p.ba_ku_sonst / 100 + zus;
+  }
+  return 0;
+}
+function versicherungsgrenze(e, p) { return e.gewerbe ? (e.gsvg_befreiung ? p.gsvg_ku_gewinn : null) : p.svs_grenze; }
+function svsBeitraege(g, u, pensionBrutto, e, p) {
+  const r = {art: e.gewerbe ? "GSVG" : "Neue Selbständige", pflicht: false, befreit: false, mindest: false,
+    bgl_kv: 0, bgl_pv: 0, kv: 0, pv: 0, sv: 0, uv: 0, summe: 0};
+  const uv = p.svs_uv * 12;
+  if (e.gewerbe) {
+    if (e.gsvg_befreiung && u <= p.gsvg_ku_umsatz && g <= p.gsvg_ku_gewinn) {
+      r.befreit = true; r.uv = r.summe = uv; return r;
+    }
+  } else if (g <= p.svs_grenze) return r;
+  r.pflicht = true;
+  const hbgl = p.svs_hbgl, mbgl = p.svs_mbgl;
+  r.mindest = g < mbgl;
+  const bgl = Math.min(Math.max(g, mbgl), hbgl);
+  let bglKv = e.neugruender ? mbgl : bgl;
+  if (e.hbgl_mehrfach) bglKv = Math.max(0, Math.min(bglKv, hbgl - pensionBrutto));
+  r.bgl_kv = bglKv; r.bgl_pv = bgl;
+  r.kv = bglKv * p.svs_kv / 100; r.pv = bgl * p.svs_pv / 100;
+  r.sv = e.svs_sv_an ? bgl * p.svs_sv / 100 : 0;
+  r.uv = (e.gewerbe || e.svs_uv_an) ? uv : 0;
+  r.summe = r.kv + r.pv + r.sv + r.uv;
+  return r;
+}
+function pensionAus(e, p) { return pensionAusBruttoMonat(pensionBruttoMonat(e, p), p, e.erh_pab); }
+function berechneMitUmsatz(u, e, p, pension) {
+  pension = pension || pensionAus(e, p);
+  const ba = betriebsausgaben(u, e, p), g0 = u - ba;
+  const svs = svsBeitraege(g0, u, pension.brutto, e, p);
+  const kammer = kammerumlage(e, p), kammerBar = TATSAECHLICHE_BA.includes(e.ba_modus) ? 0 : kammer;
+  const gewinn = g0 - svs.summe;
+  const gfb = Math.max(0, Math.min(gewinn, p.gfb_max_gewinn)) * p.gfb_satz / 100;
+  const eSa = gewinn - gfb;
+  const vfb = (e.vfb_an && pension.brutto > 0) ? veranlagungsfreibetrag(eSa, p) : 0;
+  const eStpfl = eSa - vfb;
+  const einkommen = Math.max(0, pension.einkuenfte + eStpfl);
+  const estTarif = tarifsteuer(einkommen, p), estGesamt = Math.max(0, estTarif - pension.pab);
+  const mehrsteuer = estGesamt - pension.lst_lfd;
+  const nettoZuv = g0 - svs.summe - mehrsteuer - kammerBar, nettoGesamt = pension.netto + nettoZuv;
+  return { umsatz: u, ba, kammer, kammer_bar: kammerBar, gewinn_vor_sv: g0, svs, gewinn, gfb, einkuenfte_sa: eSa, vfb,
+    einkuenfte_stpfl: eStpfl, einkommen, est_tarif: estTarif, est_gesamt: estGesamt, mehrsteuer,
+    grenzsteuersatz: grenzsteuersatz(einkommen, p), netto_zuv: nettoZuv, netto_zuv_monat: nettoZuv / 12,
+    anteil_umsatz: u > 0 ? nettoZuv / u * 100 : 0, anteil_gewinn: g0 > 0 ? nettoZuv / g0 * 100 : 0,
+    netto_gesamt: nettoGesamt, netto_gesamt_monat: nettoGesamt / 12, pension };
+}
+const umsatzMinusBA = (u, e, p) => u - betriebsausgaben(u, e, p);
+function umsatzFuerGewinn(ziel, e, p) {
+  let lo = 0, hi = 1;
+  while (umsatzMinusBA(hi, e, p) <= ziel) { hi *= 2; if (hi > 1e9) return null; }
+  for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2; if (umsatzMinusBA(mid, e, p) <= ziel) lo = mid; else hi = mid; }
+  return hi;
+}
+function unguenstigerBereich(e, p, pension) {
+  pension = pension || pensionAus(e, p);
+  const grenze = versicherungsgrenze(e, p);
+  if (grenze === null) return null;
+  const uG = umsatzFuerGewinn(grenze, e, p);
+  if (uG === null) return null;
+  const nettoUnter = berechneMitUmsatz(Math.max(0, uG - 0.01), e, p, pension).netto_zuv;
+  let lo = uG, hi = uG + 1;
+  while (berechneMitUmsatz(hi, e, p, pension).netto_zuv < nettoUnter) { hi = lo + (hi - lo) * 2; if (hi > 1e8) return null; }
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (berechneMitUmsatz(mid, e, p, pension).netto_zuv < nettoUnter) lo = mid; else hi = mid;
+  }
+  return { umsatz_grenze: uG, umsatz_ende: hi, gewinn_grenze: grenze, gewinn_ende: umsatzMinusBA(hi, e, p), netto_unter: nettoUnter };
+}
+function stundenFuerUmsatz(u, e) { const f = e.stundensatz * e.wochen; return f > 0 ? u / f : null; }
+function berechne(e, p) {
+  const pension = pensionAus(e, p), u = umsatzAusEingaben(e);
+  const r = berechneMitUmsatz(u, e, p, pension);
+  r.stunden_jahr = e.zuv_modus === "stunden" ? e.std_woche * e.wochen : null;
+  r.netto_pro_stunde = r.stunden_jahr ? r.netto_zuv / r.stunden_jahr : null;
+  r.grenz_netto_100 = berechneMitUmsatz(u + 100, e, p, pension).netto_zuv - r.netto_zuv;
+  r.unguenstig = unguenstigerBereich(e, p, pension);
+  r.warnungen = warnungen(r, e, p);
+  return r;
+}
+function warnungen(r, e, p) {
+  const w = [], ub = r.unguenstig, g = r.gewinn_vor_sv, s = r.svs, gewerbe = !!e.gewerbe;
+  const grenzname = gewerbe ? "Befreiungsgrenze (KV/PV)" : "SVS-Versicherungsgrenze";
+  if (gewerbe && e.gsvg_befreiung && r.umsatz > p.gsvg_ku_umsatz)
+    w.push(["rot", `Umsatz über ${fmt(p.gsvg_ku_umsatz)}: Die KV/PV-Befreiung für Kleinunternehmer ist nicht möglich – volle GSVG-Beiträge.`]);
+  if (gewerbe && !e.gsvg_befreiung && g <= p.gsvg_ku_gewinn && r.umsatz <= p.gsvg_ku_umsatz) {
+    const ersparnis = berechneMitUmsatz(r.umsatz, {...e, gsvg_befreiung: true}, p, r.pension).netto_zuv - r.netto_zuv;
+    w.push(["orange", `Ohne Befreiung zahlen Sie GSVG-Beiträge${s.mindest ? " auf die Mindestbeitragsgrundlage" : ""}. Mit beantragter Kleinunternehmer-Befreiung (KV/PV) blieben netto ${fmt(ersparnis)} pro Jahr mehr.`]);
+  }
+  if (s.pflicht && ub && r.umsatz < ub.umsatz_ende) {
+    let t = `UNGÜNSTIGER BEREICH: Der Gewinn liegt knapp über der ${grenzname} (${fmt(ub.gewinn_grenze)}). Netto bleibt weniger als knapp unter der Grenze (${fmt(ub.netto_unter)}). Erst ab einem Umsatz von ${fmt(ub.umsatz_ende)} (Gewinn vor SV ${fmt(ub.gewinn_ende)}) lohnt sich der Mehrverdienst.`;
+    if (e.zuv_modus === "stunden") {
+      const h1 = stundenFuerUmsatz(ub.umsatz_grenze, e), h2 = stundenFuerUmsatz(ub.umsatz_ende, e);
+      if (h1 !== null) t += ` Entspricht ca. ${zk(h1, 1)} bis ${zk(h2, 1)} Std/Woche.`;
+    }
+    w.push(["rot", t]);
+  } else if (!s.pflicht && ub && g > ub.gewinn_grenze * 0.85) {
+    w.push(["orange", `Hinweis: Der Gewinn (${fmt(g)}) liegt knapp unter der ${grenzname} (${fmt(ub.gewinn_grenze)}). Ein Überschreiten kostet rückwirkend Beiträge für das ganze Jahr; sinnvoll erst ab Umsatz ${fmt(ub.umsatz_ende)}.`]);
+  }
+  if (s.pflicht && e.neugruender)
+    w.push(["info", "Neugründer: KV-Beitragsgrundlage in den ersten beiden Kalenderjahren fix auf der Mindestbeitragsgrundlage (keine Nachbemessung) – ab Jahr 3 KV auf den tatsächlichen Gewinn."]);
+  if (gewerbe && s.befreit)
+    w.push(["info", "Kleinunternehmer-Befreiung: keine KV/PV-Beiträge, nur Unfallversicherung. Die Befreiung muss bei der SVS beantragt werden und fällt rückwirkend weg, wenn eine Grenze überschritten wird."]);
+  if (r.umsatz > p.ku_grenze)
+    w.push(["rot", `Umsatz über der Kleinunternehmergrenze (${fmt(p.ku_grenze)}): Sie müssen 20 % Umsatzsteuer auf Ihre Rechnungen aufschlagen und ans Finanzamt abführen. Der Stundensatz hier ist Ihr Honorar ohne USt – auf der Rechnung stehen dann ${fmt(e.stundensatz * 1.2)} pro Stunde (bei Stundensatz-Eingabe).`]);
+  if (["ku_dl", "ku_sonst"].includes(e.ba_modus) && e.zuv_modus !== "gewinn_jahr" && r.umsatz > p.ku_grenze)
+    w.push(["rot", "Die Kleinunternehmer-Pauschalierung ist bei diesem Umsatz nicht zulässig."]);
+  if (e.ba_modus === "basis" && e.zuv_modus !== "gewinn_jahr" && r.umsatz > p.ba_basis_max_umsatz)
+    w.push(["rot", "Die Basispauschalierung ist bei diesem Umsatz nicht zulässig."]);
+  if (r.einkuenfte_sa > p.vfb_grenze)
+    w.push(["info", `Pflichtveranlagung: Einkünfte aus dem Zuverdienst über ${fmt(p.vfb_grenze)} – Einkommensteuererklärung erforderlich (Nachzahlung der Mehrsteuer).`]);
+  if (s.pflicht && e.hbgl_mehrfach && s.bgl_kv < Math.min(r.gewinn_vor_sv, p.svs_hbgl) && !e.neugruender)
+    w.push(["info", "Mehrfachversicherung: KV-Beitragsgrundlage wegen Höchstbeitragsgrundlage gekürzt."]);
+  if (r.gewinn_vor_sv < 0)
+    w.push(["orange", "Verlust aus dem Zuverdienst – wird mit der Pension ausgeglichen (Steuergutschrift max. bis 0)."]);
+  return w;
+}
+function tabelle(e, p, werte, modusStunden) {
+  const pension = pensionAus(e, p), ub = unguenstigerBereich(e, p, pension);
+  const zeilen = werte.map(x => {
+    const u = modusStunden ? e.stundensatz * x * e.wochen : x;
+    const r = berechneMitUmsatz(u, e, p, pension);
+    r.x = x;
+    r.status = r.svs.befreit ? "befreit" : !r.svs.pflicht ? "unter Grenze" : (ub && u < ub.umsatz_ende) ? "ungünstig"
+      : r.svs.mindest ? "Mindestbeitrag" : "OK";
+    return r;
+  });
+  return {zeilen, ub};
+}
+
+/* =====================================================================
+   Formatierung
+   ===================================================================== */
+function zk(x, n = 2) {
+  if (x === null || x === undefined || !isFinite(x)) return "–";
+  const s = Math.abs(x).toFixed(n).split(".");
+  s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (x < 0 && Number(Math.abs(x).toFixed(n)) !== 0 ? "−" : "") + s.join(",");
+}
+const fmt = (x, n = 2) => zk(x, n) + " €";
+const fmtP = x => zk(x, 1) + " %";
+function zt(x) { if (x === null || x === undefined) return "–"; const s = zk(x, 2); return s.endsWith(",00") ? s.slice(0, -3) : s; }
+function zahl(t) {
+  let s = String(t).trim().replace(/[€%\s]/g, "");
+  if (!s) return 0;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  if (!/^-?\d*\.?\d+$/.test(s)) throw new Error("keine Zahl");
+  return parseFloat(s);
+}
+function zahlText(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const $ = id => document.getElementById(id);
+const heute = () => new Date().toISOString().slice(0, 10);
+function datumDe(t) { if (!t) return "–"; const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(t); return m ? `${m[3]}.${m[2]}.${m[1]}` : t; }
+function zeitDe(t) { if (!t) return "–"; const d = new Date(t); return isNaN(d) ? t : d.toLocaleString("de-AT", {dateStyle: "short", timeStyle: "short"}); }
+
+/* =====================================================================
+   Gültigkeitsprüfung (wie aktualisierung.py)
+   ===================================================================== */
+const STANDARD_JAHR = 2026, STANDARD_STAND = "2026-10-09";
+const EINST_STANDARD = { param_jahr: STANDARD_JAHR, param_quelle: "Eingebaute Standardwerte 2026", param_stand: STANDARD_STAND,
+  geprueft_am: "", pruef_intervall_tage: 180, erinnern_ab: "" };
+function plausibilitaet(p) {
+  const m = [], gr = [1,2,3,4,5,6].map(i => p["est_grenze_" + i]), sa = [1,2,3,4,5,6,7].map(i => p["est_satz_" + i]);
+  if (gr.some((a, i) => i < 5 && a >= gr[i + 1])) m.push(["rot", "Die Tarifstufen der Einkommensteuer sind nicht aufsteigend."]);
+  if (sa.some(s => s < 0 || s > 100)) m.push(["rot", "Ein Einkommensteuersatz liegt außerhalb von 0–100 %."]);
+  else if (sa.some((a, i) => i < 6 && a > sa[i + 1])) m.push(["gelb", "Die Einkommensteuersätze sind nicht aufsteigend."]);
+  for (const k of ["gfb_satz","pension_kv","sz_satz","svs_kv","svs_pv","svs_sv","ba_basis","ba_ku_dl","ba_ku_sonst"])
+    if (!(p[k] >= 0 && p[k] <= 100)) m.push(["rot", `Prozentwert „${DEF[k].label}“ = ${zt(p[k])} liegt außerhalb von 0–100 %.`]);
+  for (const [v, b, n] of [["pab_von","pab_bis","Pensionistenabsetzbetrag"],["pab_erh_von","pab_erh_bis","erhöhter Pensionistenabsetzbetrag"],["vfb_grenze","vfb_ende","Veranlagungsfreibetrag"]])
+    if (p[v] >= p[b]) m.push(["rot", `${n}: Einschleif-Untergrenze ist nicht kleiner als die Obergrenze.`]);
+  if (!(p.pension_anzahl >= 12 && p.pension_anzahl <= 14)) m.push(["gelb", "Anzahl der Pensionsbezüge ist nicht 12–14."]);
+  if (p.svs_mbgl >= p.svs_hbgl) m.push(["rot", "SVS: Mindestbeitragsgrundlage ist nicht kleiner als die Höchstbeitragsgrundlage."]);
+  if (Math.abs(p.svs_grenze - p.svs_mbgl) > 0.01) m.push(["gelb", "Versicherungsgrenze und Mindestbeitragsgrundlage sind üblicherweise gleich hoch (beide = 12 × Geringfügigkeitsgrenze)."]);
+  if (Math.abs(p.gsvg_ku_gewinn - p.svs_grenze) > 0.01) m.push(["gelb", "Die Gewinngrenze der Kleinunternehmer-Befreiung entspricht üblicherweise der Versicherungsgrenze der Neuen Selbständigen."]);
+  if (Math.abs(p.gsvg_ku_umsatz - p.ku_grenze) > 0.01) m.push(["gelb", "Die Umsatzgrenze der KV/PV-Befreiung entspricht üblicherweise der umsatzsteuerlichen Kleinunternehmergrenze."]);
+  return m;
+}
+function pruefstatus(p, einst) {
+  const m = [], jahr = +einst.param_jahr || STANDARD_JAHR, h = new Date(), hj = h.getFullYear();
+  if (jahr < hj) m.push(["rot", `Die Parameter gelten für ${jahr}, aktuell ist ${hj}. Tarif, Absetzbeträge und SVS-Werte ändern sich jedes Jahr – bitte aktualisieren.`]);
+  else if (jahr > hj) m.push(["gelb", `Die Parameter sind für ${jahr} – also für ein künftiges Jahr eingestellt.`]);
+  else if (h.getMonth() === 11) m.push(["gelb", `Die Werte für ${hj + 1} werden meist im Herbst/Dezember veröffentlicht – zum Jahreswechsel bitte aktualisieren.`]);
+  const daten = [einst.geprueft_am, einst.param_stand].filter(Boolean).sort();
+  const letzte = daten.length ? daten[daten.length - 1] : null, intervall = +einst.pruef_intervall_tage || 0;
+  if (!letzte) m.push(["gelb", "Die Werte wurden noch nie geprüft."]);
+  else {
+    const tage = Math.floor((Date.parse(heute()) - Date.parse(letzte.slice(0, 10))) / 864e5);
+    if (intervall && tage > intervall) m.push(["gelb", `Die letzte Prüfung ist ${tage} Tage her (Prüfintervall ${intervall} Tage). Gesetzliche Werte können sich auch unterjährig ändern.`]);
+  }
+  m.push(...plausibilitaet(p));
+  return [m.some(x => x[0] === "rot") ? "rot" : m.length ? "gelb" : "gruen", m];
+}
+function unterschiede(alt, neu) {
+  return PARAMETER_DEF.filter(d => d[0] in neu && Math.abs(neu[d[0]] - (alt[d[0]] ?? 0)) > 1e-9).map(d => d[0]);
+}
+
+/* =====================================================================
+   Werte aus Seitentext ermitteln (Port von websuche.py)
+   ===================================================================== */
+const WEBQUELLEN = [
+  ["WKO – Einkommensteuer & Absetzbeträge {jahr}", "https://www.wko.at/steuern/einkommen-koerperschaftsteuer-{jahr}", "Steuertarif, Pensionistenabsetzbetrag"],
+  ["WKO – Beitragswesen Selbständige {jahr}", "https://www.wko.at/entlohnung/beitragswesen-selbstaendige-{jahr}", "SVS-Sätze, Versicherungsgrenze, Mindest-/Höchstbeitragsgrundlage, Unfallversicherung"],
+  ["WKO – Gewerbliche SV-Beiträge (aktuell)", "https://www.wko.at/sozialversicherung/gewerbliche-sozialversicherungsbeitraege-ausmass", "SVS-Sätze und Beitragsgrundlagen für Gewerbetreibende"],
+  ["Forvis Mazars – Personalverrechnungswerte 2026", "https://www.forvismazars.com/at/de/unsere-expertise/outsourcing/hr-payroll/newsletter-pv-arbeitsrecht-oktober-2025/personalverrechnungswerte-fuer-das-jahr-2026", "Steuertarif, Pensionistenabsetzbetrag, Höchstbeitragsgrundlage (nur 2026)"],
+  ["finanz.at – Pensionistenabsetzbetrag", "https://www.finanz.at/steuern/pensionistenabsetzbetrag/", "Pensionistenabsetzbetrag inkl. Folgejahr"],
+  ["finanzinfo.at – Einkommensteuer", "https://finanzinfo.at/steuern/einkommensteuer/", "Steuertarif"],
+  ["raisin.com – Einkommensteuer", "https://www.raisin.com/de-at/steuer/einkommensteuer/", "Steuertarif"],
+  ["selbststaendig-machen.at – SVS-Beiträge", "https://selbststaendig-machen.at/svs-beitraege-mindestbeitragsgrundlage/", "SVS-Sätze, Mindest-/Höchstbeitragsgrundlage, Basispauschalierung"],
+];
+const THEMEN_SUCHE = [["Steuertarif","Einkommensteuertarif {jahr} Österreich Tarifstufen"],["Pensionistenabsetzbetrag","Pensionistenabsetzbetrag {jahr} Einschleifgrenzen"],
+  ["KV Pensionisten","Krankenversicherungsbeitrag Pensionisten {jahr} Prozent"],["SVS-Werte","SVS Beiträge {jahr} Neue Selbständige Versicherungsgrenze Höchstbeitragsgrundlage"],
+  ["KU-Befreiung","SVS Kleinunternehmerregelung Befreiung Pensionisten {jahr}"],["WKO-Grundumlage","WKO Grundumlage {jahr} UBIT Fachgruppe"],
+  ["Pauschalierung","Basispauschalierung Kleinunternehmerpauschalierung {jahr} Prozentsatz"]];
+const KW_TARIF = "Tarif\\w*|Steuersatz|Steuerstufe|Einkommensteuer\\w*|Grenzsteuersatz";
+const KW_PAB = "(?<!erhöhter )(?<!erhöhte )(?<!Erhöhter )Pensionistenabsetzbetr\\w*";
+const KW_PAB_ERH = "[Ee]rhöhte[rn]? Pensionistenabsetzbetr\\w*";
+const TARIF = [1,2,3,4,5,6].map(i => "est_grenze_" + i);
+const REGELN = {
+  est_grenze_1: [KW_TARIF,"betrag",.12,600], est_grenze_2: [KW_TARIF,"betrag",.12,600], est_grenze_3: [KW_TARIF,"betrag",.12,600],
+  est_grenze_4: [KW_TARIF,"betrag",.12,600], est_grenze_5: [KW_TARIF,"betrag",.12,600], est_grenze_6: [KW_TARIF,"betrag",[900000,1100000],600],
+  gfb_satz: ["Grundfreibetrag|Gewinnfreibetrag","prozent",[10,20],200], gfb_max_gewinn: ["Grundfreibetrag|Gewinnfreibetrag","betrag",.08,250],
+  vfb_grenze: ["Veranlagungsfreibetrag","betrag",.15,250], vfb_ende: ["Veranlagungsfreibetrag","betrag",.15,250],
+  pab: [KW_PAB,"betrag",.12,400], pab_von: [KW_PAB,"betrag",.12,400], pab_bis: [KW_PAB,"betrag",.12,400],
+  pab_erh: [KW_PAB_ERH,"betrag",.12,600], pab_erh_von: [KW_PAB_ERH,"betrag",.12,600], pab_erh_bis: [KW_PAB_ERH,"betrag",.12,600],
+  pension_kv: ["Krankenversicherung\\w*[^.\\n]{0,80}Pensionist\\w*|Pensionist\\w*[^.\\n]{0,80}Krankenversicherung\\w*","prozent",[4,8],150],
+  sz_freibetrag: ["Sonderzahlung\\w*|Jahressechstel","betrag",.1,300], sz_freigrenze: ["Sonderzahlung\\w*|Jahressechstel","betrag",.1,300],
+  svs_grenze: ["Versicherungsgrenze","betrag",.12,150], svs_mbgl: ["Mindestbeitragsgrundlage|\\bMBG\\b","betrag",.12,150],
+  svs_hbgl: ["Höchstbeitragsgrundlage|\\bHBG\\b","betrag",.12,150], svs_kv: ["Krankenversicherung","prozent",[5,9],300],
+  svs_pv: ["Pensionsversicherung","prozent",[15,23],300], svs_sv: ["Selbst?ständigenvorsorge","prozent",[.8,3],200],
+  svs_uv: ["Unfallversicherung","betrag",.15,200], gsvg_ku_gewinn: ["Kleinunternehmer\\w*","betrag",.12,300],
+  gsvg_ku_umsatz: ["Kleinunternehmer\\w*","betrag",.15,300], ku_grenze: ["Kleinunternehmer\\w*","betrag",.15,300],
+  ba_basis: ["Basispauschal\\w*","prozent",[10,16],250], ba_ku_dl: ["Kleinunternehmerpauschal\\w*","prozent",[15,30],300],
+  ba_ku_sonst: ["Kleinunternehmerpauschal\\w*","prozent",[35,55],300],
+};
+function bisectLeft(a, x) { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < x) lo = m + 1; else hi = m; } return lo; }
+class Seite {
+  constructor(name, text, titel = "") {
+    this.name = name;
+    this.text = text.replace(/[ \t  ]+/g, " ").replace(/\r/g, "");
+    this.titelJahre = new Set((titel.match(/(?<!\d)20\d\d(?!\d)/g) || []).map(Number));
+    this.zahlen = [];
+    const re = /(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?(?!\d)(\s*(?:Mio\.?|Million\w*))?/g;
+    let m;
+    while ((m = re.exec(this.text))) {
+      let w = parseFloat(m[1].replace(/\./g, "") + (m[2] ? "." + m[2] : ""));
+      if (m[3]) w *= 1e6;
+      const prozent = /^\s*(%|Prozent)/.test(this.text.slice(re.lastIndex, re.lastIndex + 12));
+      this.zahlen.push([m.index, re.lastIndex, w, prozent]);
+    }
+    this.pos = this.zahlen.map(z => z[0]);
+    this.jahre = [];
+    const rj = /(?<!\d)(20\d\d)(?!\d)/g;
+    while ((m = rj.exec(this.text))) this.jahre.push([m.index, +m[1]]);
+    this.jpos = this.jahre.map(j => j[0]);
+  }
+  satzanfang(pos) { return Math.max(this.text.lastIndexOf("\n", pos - 1), this.text.lastIndexOf(". ", pos - 1)) + 1; }
+  jahrScore(pos, ziel) {
+    const anfang = this.satzanfang(pos);
+    let i = bisectLeft(this.jpos, pos) - 1;
+    while (i >= 0 && this.jahre[i][0] >= anfang) {
+      const [jp, j] = this.jahre[i], zw = this.text.slice(jp, pos);
+      if ((zw.match(/\)/g) || []).length > (zw.match(/\(/g) || []).length) { i--; continue; }
+      return j === ziel ? 2 : -2;
+    }
+    if (this.titelJahre.has(ziel)) return this.titelJahre.size === 1 ? 1 : 0;
+    return this.titelJahre.size ? -1 : 0;
+  }
+}
+function passt(w, prozent, typ, grenze, akt) {
+  if (typ === "prozent" && !prozent) return false;
+  if (typ === "betrag" && prozent) return false;
+  const [lo, hi] = Array.isArray(grenze) ? grenze : [akt * (1 - grenze), akt * (1 + grenze)];
+  return w >= lo && w <= hi;
+}
+function kandidaten(seite, p, ziel) {
+  const erg = {};
+  for (const [key, [kw, typ, grenze, fenster]] of Object.entries(REGELN)) {
+    const akt = p[key]; if (akt === undefined) continue;
+    const werte = new Map(), re = new RegExp(kw, "g");
+    let m;
+    while ((m = re.exec(seite.text))) {
+      const ende = re.lastIndex, von = bisectLeft(seite.pos, ende), bis = bisectLeft(seite.pos, ende + fenster);
+      for (const [pos, zende, w, prozent] of seite.zahlen.slice(von, bis)) {
+        if (!passt(w, prozent, typ, grenze, akt)) continue;
+        const score = seite.jahrScore(pos, ziel), k = Math.round(w * 1e4) / 1e4;
+        if (!werte.has(k)) werte.set(k, {jahr: score, stimmen: 0, abstand: pos - ende, kontext: ""});
+        const x = werte.get(k);
+        x.stimmen++;
+        if (score > x.jahr || (score === x.jahr && pos - ende < x.abstand) || !x.kontext) {
+          x.jahr = Math.max(x.jahr, score); x.abstand = Math.min(x.abstand, pos - ende);
+          x.kontext = seite.text.slice(Math.max(m.index, pos - 140), zende + 50).replace(/\s+/g, " ");
+        }
+      }
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    if (werte.size) erg[key] = werte;
+  }
+  return erg;
+}
+function auswerten(seiten, p, ziel) {
+  const ges = {}, tarifSaetze = [];
+  const bestOf = werte => [...werte.entries()].sort((a, b) => (b[1].jahr - a[1].jahr) || (b[1].stimmen - a[1].stimmen) || (a[1].abstand - b[1].abstand))[0];
+  for (const s of seiten) {
+    const kand = kandidaten(s, p, ziel), best = {};
+    for (const k of TARIF) if (kand[k]) best[k] = bestOf(kand[k]);
+    if (TARIF.slice(0, 5).every(k => best[k])) {
+      const t = TARIF.map(k => best[k] ? best[k][0] : null), kette = t.filter(x => x !== null);
+      if (kette.every((a, i) => i === 0 || kette[i - 1] < a))
+        tarifSaetze.push({score: Math.min(...TARIF.slice(0, 5).map(k => best[k][1].jahr)), werte: t, name: s.name, kontext: best.est_grenze_1[1].kontext});
+    }
+    for (const [key, werte] of Object.entries(kand)) {
+      if (TARIF.includes(key)) continue;
+      for (const [w, info] of werte) {
+        ges[key] = ges[key] || new Map();
+        if (!ges[key].has(w)) ges[key].set(w, {jahr: -9, stimmen: 0, abstand: 1e9, quellen: [], kontext: ""});
+        const g = ges[key].get(w);
+        g.stimmen += info.stimmen;
+        if (!g.quellen.includes(s.name)) g.quellen.push(s.name);
+        if (info.jahr > g.jahr || (info.jahr === g.jahr && info.abstand < g.abstand)) {
+          g.jahr = info.jahr; g.abstand = info.abstand; g.kontext = `${s.name}: …${info.kontext}…`;
+        }
+      }
+    }
+  }
+  const erg = {};
+  for (const [key, werte] of Object.entries(ges)) {
+    const [w, g] = [...werte.entries()].sort((a, b) => (b[1].jahr - a[1].jahr) || (b[1].quellen.length - a[1].quellen.length)
+      || (b[1].stimmen - a[1].stimmen) || (a[1].abstand - b[1].abstand))[0];
+    if (g.jahr < 0) continue;
+    erg[key] = {wert: w, quellen: g.quellen, kontext: g.kontext, jahr_ok: g.jahr > 0};
+  }
+  if (tarifSaetze.length) {
+    const gleich = (a, b) => a.werte.slice(0, 5).every((x, i) => x === b.werte[i]);
+    const best = tarifSaetze.slice().sort((a, b) => (b.score - a.score) ||
+      (tarifSaetze.filter(u => gleich(u, b)).length - tarifSaetze.filter(u => gleich(u, a)).length))[0];
+    if (best.score >= 0) {
+      const quellen = tarifSaetze.filter(u => gleich(u, best)).map(u => u.name);
+      TARIF.forEach((k, i) => { if (best.werte[i] !== null) erg[k] = {wert: best.werte[i], quellen, kontext: `${quellen[0]}: …${best.kontext}…`, jahr_ok: best.score > 0}; });
+    }
+  }
+  return erg;
+}
+
+/* =====================================================================
+   Speicherung: claude.ai-Konto (db, privat pro Person) oder Browser
+   ===================================================================== */
+const Store = {
+  modus: "lokal", db: null, uid: null, downloads: null, ketten: {},
+  async init() {
+    try {
+      if (window.claude && typeof window.claude.use === "function") {
+        const [db, user, dl] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
+        this.downloads = dl;
+        const uid = user ? await user.id() : null;
+        if (db && uid) { this.db = db; this.uid = uid; this.modus = "konto"; }
+      }
+    } catch (e) { /* lokal weiter */ }
+  },
+  ref(key) { return this.db.doc(`data/users/${this.uid}/${key}`); },
+  histCol() { return this.db.doc(`data/users/${this.uid}/historie`).collection("eintraege"); },
+  async get(key) {
+    if (this.modus === "konto") {
+      try { const s = await this.ref(key).get(); return s.exists ? s.data().v : null; } catch (e) { return null; }
+    }
+    try { const t = localStorage.getItem("pensionsrechner_" + key); return t ? JSON.parse(t) : null; } catch (e) { return null; }
+  },
+  set(key, val) {
+    // je Dokument eine Schreiboperation nach der anderen
+    const vorher = this.ketten[key] || Promise.resolve();
+    const p = vorher.then(async () => {
+      if (this.modus === "konto") await this.ref(key).set({v: val});
+      else localStorage.setItem("pensionsrechner_" + key, JSON.stringify(val));
+    }).catch(e => { zeigeToast("Speichern nicht möglich: " + (e && (e.message || e.code) || e)); });
+    this.ketten[key] = p;
+    return p;
+  },
+  async historieLaden() {
+    if (this.modus === "konto") {
+      try { const q = await this.histCol().orderBy("zeit", "desc").limit(300).get(); return q.docs.map(d => ({id: d.id, ...d.data()})); }
+      catch (e) { return []; }
+    }
+    return (await this.get("historie")) || [];
+  },
+  async historieNeu(eintrag) {
+    if (this.modus === "konto") { const ref = this.histCol().doc(); await ref.set(eintrag); return {id: ref.id, ...eintrag}; }
+    const e = {id: "h" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...eintrag};
+    zustand.historie.unshift(e); zustand.historie = zustand.historie.slice(0, 300);
+    await this.set("historie", zustand.historie);
+    return e;
+  },
+  async historieLoeschen(id) {
+    if (this.modus === "konto") { await this.histCol().doc(id).delete(); return; }
+    await this.set("historie", zustand.historie);
+  },
+};
+
+/* =====================================================================
+   Zustand
+   ===================================================================== */
+const zustand = { p: {...PARAMETER_STANDARD}, einst: {...EINST_STANDARD}, e: {...EINGABEN_STANDARD}, szenarien: {}, historie: [],
+  ergebnis: null, tab: null, spaeterHinweis: false };
+
+async function parameterAendern(neu, anlass, meta = {}) {
+  neu = {...PARAMETER_STANDARD, ...zustand.p, ...neu};
+  const diff = unterschiede(zustand.p, neu);
+  const jahrNeu = "param_jahr" in meta && +meta.param_jahr !== +zustand.einst.param_jahr;
+  if (diff.length || jahrNeu) {
+    const e = await Store.historieNeu(historieEintrag(anlass));
+    if (Store.modus === "konto") { zustand.historie.unshift(e); }
+  }
+  zustand.p = neu;
+  Object.assign(zustand.einst, meta);
+  await Promise.all([Store.set("param", zustand.p), Store.set("einst", zustand.einst)]);
+  paramAnzeigen(); alles();
+  return diff.length > 0 || jahrNeu;
+}
+function historieEintrag(anlass) {
+  return { zeit: new Date().toISOString(), anlass, jahr: zustand.einst.param_jahr, quelle: zustand.einst.param_quelle || "",
+    stand: zustand.einst.param_stand || "", parameter: {...zustand.p} };
+}
+
+/* =====================================================================
+   Oberfläche – Eingaben
+   ===================================================================== */
+const ZAHLFELDER = ["pension_betrag","stundensatz","std_woche","wochen","umsatz_jahr","umsatz_monat","gewinn_jahr","ba_betrag","ba_prozent","zus_ausgaben"];
+const CHECKS = ["erh_pab","gsvg_befreiung","neugruender","svs_uv_an","svs_sv_an","hbgl_mehrfach","vfb_an"];
+const SELECTS = ["pension_modus","zuv_modus","ba_modus"];
+function eingabenSetzen(e) {
+  for (const k of ZAHLFELDER) { $(k).value = zahlText(e[k]); $(k).classList.remove("fehler"); }
+  for (const k of CHECKS) $(k).checked = !!e[k];
+  for (const k of SELECTS) $(k).value = e[k];
+  $(e.gewerbe ? "gewerbe1" : "gewerbe0").checked = true;
+}
+function eingabenLesen() {
+  const e = {...EINGABEN_STANDARD}; let fehler = false;
+  for (const k of ZAHLFELDER) {
+    try { e[k] = zahl($(k).value); $(k).classList.remove("fehler"); }
+    catch (x) { e[k] = zustand.e[k]; $(k).classList.add("fehler"); fehler = true; }
+  }
+  for (const k of CHECKS) e[k] = $(k).checked;
+  for (const k of SELECTS) e[k] = $(k).value;
+  e.gewerbe = $("gewerbe1").checked;
+  if (e.gewerbe) e.svs_uv_an = true;
+  return [e, fehler];
+}
+function modusAnzeigen(e) {
+  document.querySelectorAll("[data-z]").forEach(el => {
+    const an = el.dataset.z === e.zuv_modus; el.classList.toggle("dis", !an); el.querySelector("input").disabled = !an;
+  });
+  const direkt = e.zuv_modus === "gewinn_jahr";
+  $("ba_modus").disabled = direkt; $("boxBA").classList.toggle("dis", direkt);
+  const bm = e.ba_modus;
+  const sicht = {betrag: ["betrag_jahr","betrag_monat"].includes(bm), prozent: bm === "prozent", pausch: ["basis","ku_dl","ku_sonst"].includes(bm)};
+  document.querySelectorAll("[data-b]").forEach(el => {
+    const an = !direkt && sicht[el.dataset.b]; el.classList.toggle("dis", !an); el.querySelector("input").disabled = !an;
+  });
+  $("u_ba").textContent = bm === "betrag_monat" ? "€/Mon." : "€/Jahr";
+  $("u_pension").textContent = e.pension_modus === "brutto_jahr" ? "€/Jahr" : "€/Mon.";
+  $("gsvg_befreiung").disabled = !e.gewerbe; $("lbl_gsvg_befreiung").classList.toggle("dis", !e.gewerbe);
+  $("svs_uv_an").disabled = e.gewerbe; $("lbl_svs_uv_an").classList.toggle("dis", e.gewerbe);
+  if (e.gewerbe) $("svs_uv_an").checked = true;
+}
+let eingabeTimer = null;
+function eingabeGeaendert() {
+  const [e, fehler] = eingabenLesen();
+  modusAnzeigen(e);
+  if (fehler) return;
+  zustand.e = e;
+  rechnen();
+  clearTimeout(eingabeTimer);
+  eingabeTimer = setTimeout(() => Store.set("eingaben", zustand.e), 900);
+}
+
+/* =====================================================================
+   Ergebnis
+   ===================================================================== */
+function rechnen() {
+  let r;
+  try { r = berechne(zustand.e, zustand.p); } catch (x) { zeigeToast("Berechnungsfehler: " + x.message); return; }
+  zustand.ergebnis = r;
+  ergebnisAnzeigen(r, zustand.e, zustand.p);
+  if (zustand.tab === "tabelle") tabelleAnzeigen();
+}
+function berichtZeilen(r, e, p) {
+  const pen = r.pension, s = r.svs, gewerbe = !!e.gewerbe, L = [];
+  const h = t => L.push({h: t});
+  const z = (label, wert, extra = "", tip = "", art = "") => L.push({label, wert, extra, tip, art});
+  h("Zuverdienst");
+  if (r.stunden_jahr) z("Stunden pro Jahr", zk(r.stunden_jahr, 1) + " h", `${zahlText(e.std_woche)} h × ${zahlText(e.wochen)} Wo.`, "Stunden pro Woche × Arbeitswochen pro Jahr.");
+  z("Umsatz", fmt(r.umsatz), "", "Summe der Honorare im Jahr (ohne Umsatzsteuer).");
+  if (e.zuv_modus !== "gewinn_jahr")
+    z("– Betriebsausgaben", fmt(r.ba), BA_MODI[e.ba_modus] + (["basis","ku_dl","ku_sonst"].includes(e.ba_modus) ? ` (${zt(p[{basis: "ba_basis", ku_dl: "ba_ku_dl", ku_sonst: "ba_ku_sonst"}[e.ba_modus]])} %)` : ""),
+      "Abzugsfähige Ausgaben laut gewählter Methode" + (r.kammer && !r.kammer_bar ? " inkl. WKO-Grundumlage." : "."));
+  z("= Gewinn vor SVS-Beiträgen", fmt(r.gewinn_vor_sv), "", "Umsatz minus Betriebsausgaben. Das ist die Beitragsgrundlage für die SVS und die Größe, die mit der Versicherungs- bzw. Befreiungsgrenze verglichen wird.", "fett");
+  h("Sozialversicherung – " + (gewerbe ? "Gewerbetreibender (GSVG)" : "Neuer Selbständiger"));
+  if (s.befreit) {
+    z("Befreiungsgrenze Gewinn / Umsatz", `${zk(p.gsvg_ku_gewinn, 0)} / ${fmt(p.gsvg_ku_umsatz, 0)}`, "eingehalten → KV/PV befreit", "Kleinunternehmer-Befreiung für Pensionisten: Gewinn höchstens 6.613,20 € und Umsatz höchstens 55.000 €. Muss bei der SVS beantragt werden.");
+    z("Unfallversicherung (12 × fix)", fmt(s.uv), "", "Bei Gewerbe immer zu zahlen, auch mit Befreiung.");
+    z("= SVS gesamt", fmt(s.summe), `= ${fmt(s.summe / 12)} / Monat`, "", "fett");
+  } else if (s.pflicht) {
+    if (gewerbe) z("Versicherungspflicht", e.gsvg_befreiung ? "Grenze überschritten" : "keine Befreiung", "", "Gewerbetreibende sind ab dem Gewerbeschein pflichtversichert. Ohne Befreiung gelten Mindestbeiträge auch bei kleinem Gewinn.");
+    else z("Versicherungsgrenze", fmt(p.svs_grenze), "überschritten → pflichtversichert", "Über dieser Grenze fallen Beiträge auf den GESAMTEN Gewinn an, nicht nur auf den Teil darüber.");
+    if (s.mindest) z("Mindestbeitragsgrundlage", fmt(p.svs_mbgl), "Gewinn liegt darunter", "Beiträge werden mindestens von dieser Grundlage berechnet.");
+    z(`Krankenversicherung ${fmtP(p.svs_kv)}`, fmt(s.kv), `BGL ${fmt(s.bgl_kv)}`, "KV-Beitrag. Die Pension zählt (Option) bei der Höchstbeitragsgrundlage mit; als Neugründer ist die KV-Grundlage in Jahr 1–2 fix.");
+    z(`Pensionsversicherung ${fmtP(p.svs_pv)}`, fmt(s.pv), `BGL ${fmt(s.bgl_pv)}`, "PV-Beitrag. Er erhöht später die Pension (Höherversicherung) – ist also nicht ganz verloren.");
+    if (s.sv) z(`Selbständigenvorsorge ${zk(p.svs_sv)} %`, fmt(s.sv), "", "Abfertigung neu für Selbständige – Kapital wird in einer Vorsorgekasse angespart.");
+    if (s.uv) z("Unfallversicherung (12 × fix)", fmt(s.uv), "", "Fixbetrag pro Monat, unabhängig vom Gewinn.");
+    z("= SVS gesamt", fmt(s.summe), `= ${fmt(s.summe / 12)} / Monat`, "SVS-Beiträge sind als Betriebsausgabe steuerlich absetzbar.", "fett");
+  } else {
+    z("Versicherungsgrenze", fmt(p.svs_grenze), "nicht überschritten → keine SVS", "Neue Selbständige sind erst über dieser Gewinngrenze pflichtversichert.");
+    z("= SVS gesamt", fmt(0), "", "", "fett");
+  }
+  if (r.kammer) z("WKO-Grundumlage", fmt(r.kammer), r.kammer_bar ? "durch Pauschale abgegolten, nicht absetzbar" : "in Betriebsausgaben", "Kammerbeitrag für Gewerbetreibende; Höhe je nach Bundesland und Fachgruppe – unter Parameter einstellbar.");
+  h("Einkommensteuer");
+  z("Gewinn nach SVS", fmt(r.gewinn));
+  z(`– Grundfreibetrag ${fmtP(p.gfb_satz)} (max. ${fmt(p.gfb_max_gewinn, 0)})`, fmt(r.gfb), "", "Gewinnfreibetrag: 15 % des Gewinns steuerfrei, höchstens von 33.000 € Gewinn (max. 4.950 €).");
+  if (r.vfb) z("– Veranlagungsfreibetrag", fmt(r.vfb), "", "Zuverdienst-Einkünfte bis 730 € bleiben steuerfrei; eingeschliffen bis 1.460 €.");
+  z("= Einkünfte aus " + (gewerbe ? "Gewerbebetrieb" : "selbständiger Arbeit"), fmt(r.einkuenfte_stpfl));
+  z("+ Pensionseinkünfte (nach KV)", fmt(pen.einkuenfte), "", "Laufende Pension (12 Bezüge) minus KV. 13./14. Pension sind fest mit 6 % besteuert und hier nicht enthalten.");
+  z("= Einkommen (Tarif)", fmt(r.einkommen), `Grenzsteuersatz ${fmtP(r.grenzsteuersatz)}`, "Grenzsteuersatz = Steuersatz auf jeden zusätzlich verdienten Euro.", "fett");
+  z("Tarifsteuer", fmt(r.est_tarif), "", "Einkommensteuer laut Tarif vor Absetzbeträgen.");
+  z(`– Pensionistenabsetzbetrag${e.erh_pab ? " (erhöht)" : ""}`, fmt(pen.pab), "", "Wird nach den Pensionseinkünften eingeschliffen, nicht nach dem Zuverdienst.");
+  z("= Einkommensteuer gesamt (lfd.)", fmt(r.est_gesamt));
+  z("– bereits einbehaltene Lohnsteuer Pension", fmt(pen.lst_lfd), "", "Diese Steuer zieht die Pensionsversicherung schon monatlich ab.");
+  z("= Mehrsteuer durch Zuverdienst", fmt(r.mehrsteuer), r.mehrsteuer > 0 ? "Nachzahlung bei Veranlagung" : "", "Wird mit dem Einkommensteuerbescheid nachgezahlt. Tipp: monatlich zurücklegen; das Finanzamt setzt später auch Vorauszahlungen fest.", "fett");
+  h("Netto Zuverdienst");
+  z("Netto pro Jahr", fmt(r.netto_zuv), "", "Gewinn vor SVS − SVS − Mehrsteuer" + (r.kammer_bar ? " − Grundumlage" : "") + ".", "gross");
+  z("Netto pro Monat (÷ 12)", fmt(r.netto_zuv_monat), "", "", "gross");
+  z("Nettoanteil vom Umsatz", fmtP(r.anteil_umsatz), "", "So viel Prozent des Umsatzes bleiben Ihnen tatsächlich.", "fett");
+  z("Nettoanteil vom Gewinn vor SVS", fmtP(r.anteil_gewinn));
+  if (r.netto_pro_stunde !== null) z("Netto pro Arbeitsstunde", fmt(r.netto_pro_stunde), "", "Netto pro Jahr ÷ Arbeitsstunden pro Jahr.");
+  z("Von +100 € mehr Umsatz bleiben netto", fmt(r.grenz_netto_100), "", "Ihre aktuelle Grenzbelastung. Ist dieser Wert negativ, liegen Sie knapp unter einer Grenze, deren Überschreiten mehr kostet als bringt.");
+  const ub = r.unguenstig;
+  if (ub) {
+    const t = "In diesem Bereich bleibt netto weniger als knapp unter der Grenze, weil die Beiträge rückwirkend auf den ganzen Gewinn fällig werden.";
+    z("Ungünstiger Bereich (Umsatz)", `${zk(ub.umsatz_grenze, 0)} – ${fmt(ub.umsatz_ende, 0)}`, "", t);
+    if (e.zuv_modus === "stunden") {
+      const h1 = stundenFuerUmsatz(ub.umsatz_grenze, e), h2 = stundenFuerUmsatz(ub.umsatz_ende, e);
+      if (h1 !== null) {
+        z("Ungünstiger Bereich (Std/Woche)", `${zk(h1, 1)} – ${zk(h2, 1)} h`, "", t);
+        z("Max. Std/Woche unter der Grenze", `${zk(h1, 2)} h`, "", "Bis zu dieser Wochenstundenzahl bleiben Sie unter der Grenze.");
+      }
+    }
+  }
+  h("Pension");
+  z("Brutto pro Monat", fmt(pen.monat), `× ${zahlText(p.pension_anzahl)}`);
+  z("Brutto pro Jahr", fmt(pen.brutto));
+  z(`– KV Pension ${fmtP(p.pension_kv)}`, fmt(pen.kv));
+  z("– Lohnsteuer laufend", fmt(pen.lst_lfd));
+  z("– Lohnsteuer 13./14. (6 %)", fmt(pen.lst_sz), "", "Sonderzahlungen: 6 % nach Freibetrag 620 €, steuerfrei bis 2.100 €.");
+  z("= Pension netto pro Jahr", fmt(pen.netto), "", "", "fett");
+  z("Pension netto laufend / Monat", fmt(pen.netto_monat_lfd));
+  h("Gesamt (Pension + Zuverdienst)");
+  z("Gesamt netto pro Jahr", fmt(r.netto_gesamt), "", "", "gross");
+  z("Gesamt netto pro Monat (÷ 12)", fmt(r.netto_gesamt_monat), "", "Jahresnetto inkl. 13./14. Pension, gleichmäßig auf 12 Monate verteilt.", "gross");
+  z("Zum Vergleich: nur Pension netto / Monat (÷ 12)", fmt(pen.netto / 12));
+  return L;
+}
+function ergebnisAnzeigen(r, e, p) {
+  const pen = r.pension, s = r.svs;
+  $("ergTitel").textContent = `Ergebnis ${zustand.einst.param_jahr}`;
+  $("ergArt").textContent = e.gewerbe ? "Gewerbetreibender (GSVG)" + (s.befreit ? " – KV/PV befreit" : "")
+    : "Neuer Selbständiger" + (s.pflicht ? "" : " – unter Versicherungsgrenze");
+  $("pensionInfo").textContent = e.pension_modus === "netto_monat" ? `→ Brutto rückgerechnet: ${fmt(pen.monat)} / Monat`
+    : e.pension_modus === "brutto_jahr" ? `→ Brutto pro Monat: ${fmt(pen.monat)}` : `→ Netto laufend: ${fmt(pen.netto_monat_lfd)} / Monat`;
+  const ungue = r.warnungen.some(w => w[1].startsWith("UNGÜNSTIG"));
+  $("tiles").innerHTML = `
+    <div class="tile haupt" data-tip="Was vom Zuverdienst pro Monat netto bleibt (Jahr ÷ 12)."><div class="k">Netto-Zuverdienst / Monat</div><div class="v">${fmt(r.netto_zuv_monat)}</div><div class="s">${fmt(r.netto_zuv)} pro Jahr</div></div>
+    <div class="tile" data-tip="So viel Prozent des Umsatzes bleiben netto."><div class="k">Nettoanteil vom Umsatz</div><div class="v" style="color:${ungue ? "var(--bad)" : "inherit"}">${fmtP(r.anteil_umsatz)}</div><div class="s">Umsatz ${fmt(r.umsatz, 0)}</div></div>
+    <div class="tile" data-tip="SVS-Beiträge und Mehrsteuer durch den Zuverdienst."><div class="k">SVS + Mehrsteuer / Jahr</div><div class="v">${fmt(s.summe + r.mehrsteuer, 0)}</div><div class="s">SVS ${fmt(s.summe, 0)} · ESt ${fmt(r.mehrsteuer, 0)}</div></div>
+    <div class="tile" data-tip="Pension netto + Zuverdienst netto, gleichmäßig auf 12 Monate verteilt."><div class="k">Gesamt netto / Monat</div><div class="v">${fmt(r.netto_gesamt_monat)}</div><div class="s">nur Pension: ${fmt(pen.netto / 12)}</div></div>`;
+  $("warnungen").innerHTML = r.warnungen.filter(w => w[0] !== "info").map(w => `<div class="meldung ${w[0]}">⚠ ${esc(w[1])}</div>`).join("");
+  $("hinweise").innerHTML = r.warnungen.filter(w => w[0] === "info").map(w => `<div class="meldung info">ℹ ${esc(w[1])}</div>`).join("");
+  $("bericht").innerHTML = berichtZeilen(r, e, p).map(z => z.h ? `<tr><th colspan="3">${esc(z.h)}</th></tr>`
+    : `<tr class="${z.art}"${z.tip ? ` data-tip="${esc(z.tip)}"` : ""}><td>${esc(z.label)}</td><td class="w">${esc(z.wert)}</td><td class="x">${esc(z.extra)}</td></tr>`).join("");
+}
+function berichtText() {
+  const r = zustand.ergebnis, e = zustand.e, p = zustand.p;
+  let t = `Pensionsrechner Österreich – Bericht vom ${new Date().toLocaleString("de-AT")}\nWerte für ${zustand.einst.param_jahr} (${zustand.einst.param_quelle})\n${"=".repeat(70)}\n\n`;
+  for (const [a, x] of r.warnungen) t += (a === "info" ? "Hinweis: " : "WARNUNG: ") + x + "\n";
+  t += "\n";
+  for (const z of berichtZeilen(r, e, p)) t += z.h ? `\n${z.h.toUpperCase()}\n` : `  ${z.label.padEnd(46)}${z.wert.padStart(16)}  ${z.extra}\n`;
+  return t;
+}
+
+/* =====================================================================
+   Tabelle & Diagramm
+   ===================================================================== */
+let tabModus = null, tabDaten = null;
+function tabBereichSetzen(stunden) {
+  const p = zustand.p, w = stunden ? [p.tab_von, p.tab_bis, p.tab_schritt] : [p.tab_umsatz_von, p.tab_umsatz_bis, p.tab_umsatz_schritt];
+  ["tabVon","tabBis","tabSchritt"].forEach((id, i) => $(id).value = zahlText(w[i]));
+  tabModus = stunden;
+}
+function tabelleAnzeigen() {
+  const e = zustand.e, stunden = e.zuv_modus === "stunden";
+  if (stunden !== tabModus) tabBereichSetzen(stunden);
+  $("tabTitel").textContent = stunden ? `Variation Stunden/Woche (Stundensatz ${fmt(e.stundensatz)}, ${zahlText(e.wochen)} Wochen)` : "Variation Jahresumsatz (bzw. Gewinn)";
+  let von, bis, schritt;
+  try { [von, bis, schritt] = ["tabVon","tabBis","tabSchritt"].map(id => zahl($(id).value)); } catch (x) { return; }
+  if (!(schritt > 0) || bis < von) return;
+  const n = Math.min(Math.floor((bis - von) / schritt + 1e-9) + 1, 1000);
+  const werte = Array.from({length: n}, (_, i) => Math.round((von + i * schritt) * 1e4) / 1e4);
+  tabDaten = tabelle(e, zustand.p, werte, stunden);
+  const kopf = [["x", stunden ? "Std/Woche" : "Umsatz", "Variierter Wert: Stunden pro Woche bzw. Jahresumsatz."], ["u","Umsatz","Jahresumsatz ohne Umsatzsteuer."],
+    ["g","Gewinn v. SVS","Umsatz minus Betriebsausgaben, vor SVS-Beiträgen."], ["s","SVS","SVS-Beiträge gesamt pro Jahr (KV, PV, Vorsorge, Unfall)."],
+    ["f","Grundfreib.","Grundfreibetrag: 15 % des Gewinns steuerfrei (max. 4.950 €)."], ["m","Mehr-ESt","Zusätzliche Einkommensteuer durch den Zuverdienst."],
+    ["n","Netto/Jahr","Was vom Zuverdienst im Jahr netto bleibt."], ["nm","Netto/Monat","Netto-Zuverdienst ÷ 12."], ["a","Netto % Ums.","Netto in Prozent vom Umsatz."],
+    ["ge","Gesamt netto/Mon.","Pension netto + Zuverdienst netto, pro Monat (÷ 12)."],
+    ["st","Status","unter Grenze / befreit = keine KV/PV · ungünstig = weniger netto als knapp unter der Grenze · Mindestbeitrag = Gewinn unter der Mindestbeitragsgrundlage · OK = lohnend"]];
+  const klasse = {"unter Grenze": "s-unter", befreit: "s-befreit", "ungünstig": "s-unguenstig", Mindestbeitrag: "s-mindest", OK: "s-ok"};
+  $("datentabelle").innerHTML = `<thead><tr>${kopf.map(k => `<th data-tip="${esc(k[2])}">${esc(k[1])}</th>`).join("")}</tr></thead><tbody>` +
+    tabDaten.zeilen.map(r => `<tr class="${klasse[r.status]}"><td>${stunden ? zahlText(r.x) : zk(r.x, 0)}</td><td>${zk(r.umsatz, 0)}</td><td>${zk(r.gewinn_vor_sv, 0)}</td><td>${zk(r.svs.summe, 0)}</td><td>${zk(r.gfb, 0)}</td><td>${zk(r.mehrsteuer, 0)}</td><td>${zk(r.netto_zuv, 0)}</td><td>${zk(r.netto_zuv_monat, 0)}</td><td>${zk(r.anteil_umsatz, 1)}</td><td>${zk(r.netto_gesamt / 12, 0)}</td><td class="st">${r.status}</td></tr>`).join("") + "</tbody>";
+  diagramm(stunden);
+}
+function diagramm(stunden) {
+  const svg = $("diagramm"), z = tabDaten.zeilen;
+  if (z.length < 2) { svg.innerHTML = ""; return; }
+  const W = 1000, H = 320, ml = 70, mr = 16, mt = 34, mb = 42;
+  const xs = z.map(r => r.x);
+  const reihen = [["netto_zuv", "var(--c-netto)", "Netto-Zuverdienst / Jahr"], ["svs", "var(--c-svs)", "SVS / Jahr"], ["mehrsteuer", "var(--c-est)", "Mehr-Einkommensteuer / Jahr"]];
+  const wert = (r, k) => k === "svs" ? r.svs.summe : r[k];
+  const alle = z.flatMap(r => reihen.map(([k]) => wert(r, k)));
+  const ymin = Math.min(0, ...alle), ymax = Math.max(...alle) || 1, xmin = xs[0], xmax = xs[xs.length - 1];
+  const px = x => ml + (x - xmin) / (xmax - xmin) * (W - ml - mr), py = y => H - mb - (y - ymin) / (ymax - ymin) * (H - mt - mb);
+  let s = "";
+  const ub = tabDaten.ub;
+  if (ub) {
+    const a = stunden ? stundenFuerUmsatz(ub.umsatz_grenze, zustand.e) : ub.umsatz_grenze;
+    const b = stunden ? stundenFuerUmsatz(ub.umsatz_ende, zustand.e) : ub.umsatz_ende;
+    if (a !== null && b !== null && b > xmin && a < xmax) {
+      const x1 = px(Math.max(a, xmin)), x2 = px(Math.min(b, xmax));
+      s += `<rect x="${x1}" y="${mt}" width="${Math.max(1, x2 - x1)}" height="${H - mt - mb}" fill="var(--shade)"/><text x="${(x1 + x2) / 2}" y="${mt + 14}" text-anchor="middle" font-size="12" fill="var(--bad)">ungünstig</text>`;
+    }
+  }
+  for (let i = 0; i <= 5; i++) {
+    const y = ymin + (ymax - ymin) * i / 5;
+    s += `<line x1="${ml}" x2="${W - mr}" y1="${py(y)}" y2="${py(y)}" stroke="var(--line)" stroke-width="1"/><text x="${ml - 8}" y="${py(y) + 4}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${zk(y, 0)}</text>`;
+  }
+  const step = Math.max(1, Math.floor(xs.length / 12));
+  xs.forEach((x, i) => { if (i % step === 0) s += `<text x="${px(x)}" y="${H - mb + 16}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${stunden ? zahlText(x) : zk(x, 0)}</text>`; });
+  s += `<text x="${(W + ml) / 2}" y="${H - 6}" text-anchor="middle" font-size="12" fill="var(--muted)">${stunden ? "Stunden pro Woche" : "Jahresumsatz in €"}</text>`;
+  s += `<line x1="${ml}" x2="${W - mr}" y1="${py(0)}" y2="${py(0)}" stroke="var(--muted)" stroke-width="1"/>`;
+  for (const [k, farbe] of reihen)
+    s += `<polyline fill="none" stroke="${farbe}" stroke-width="2.5" stroke-linejoin="round" points="${z.map(r => `${px(r.x).toFixed(1)},${py(wert(r, k)).toFixed(1)}`).join(" ")}"/>`;
+  let lx = ml;
+  for (const [, farbe, name] of reihen) { s += `<line x1="${lx}" x2="${lx + 22}" y1="14" y2="14" stroke="${farbe}" stroke-width="3"/><text x="${lx + 28}" y="18" font-size="13" fill="var(--ink)">${name}</text>`; lx += 50 + name.length * 7; }
+  svg.innerHTML = s;
+}
+function csvText() {
+  const z = x => x.toFixed(2).replace(".", ",");
+  let t = [tabModus ? "Std/Woche" : "Umsatz-Variante","Umsatz","Betriebsausgaben","Gewinn vor SVS","SVS KV","SVS PV","SVS SV","SVS UV","SVS gesamt","Grundfreibetrag","Mehr-ESt","Netto/Jahr","Netto/Monat","Netto % Umsatz","Gesamt netto/Jahr","Status"].join(";") + "\r\n";
+  for (const r of tabDaten.zeilen) { const s = r.svs; t += [r.x, r.umsatz, r.ba, r.gewinn_vor_sv, s.kv, s.pv, s.sv, s.uv, s.summe, r.gfb, r.mehrsteuer, r.netto_zuv, r.netto_zuv_monat, r.anteil_umsatz, r.netto_gesamt].map(z).join(";") + ";" + r.status + "\r\n"; }
+  return "﻿" + t;
+}
+
+/* =====================================================================
+   Parameter-Reiter
+   ===================================================================== */
+const PARAM_TIPPS = {
+  est_grenze_1: "Bis zu diesem Einkommen ist keine Einkommensteuer zu zahlen.", est_satz_7: "Steuersatz für Einkommensteile über der letzten Tarifstufe.",
+  gfb_satz: "Grundfreibetrag (Teil des Gewinnfreibetrags) in % des Gewinns.", gfb_max_gewinn: "Der Grundfreibetrag wird höchstens von diesem Gewinn berechnet.",
+  vfb_grenze: "Veranlagungsfreibetrag: Nebeneinkünfte bis zu diesem Betrag sind steuerfrei.", vfb_ende: "Ab diesem Betrag entfällt der Veranlagungsfreibetrag ganz.",
+  pab: "Pensionistenabsetzbetrag – wird von der Steuer abgezogen.", pab_von: "Ab diesen Pensionseinkünften sinkt der Absetzbetrag gleichmäßig.",
+  pab_bis: "Ab diesen Pensionseinkünften ist der Absetzbetrag 0.", pension_anzahl: "Anzahl Pensionsbezüge pro Jahr (12 laufende + 13./14.).",
+  pension_kv: "Krankenversicherungsbeitrag, der von der Pension abgezogen wird.", sz_freibetrag: "13./14. Pension: dieser Betrag bleibt steuerfrei.",
+  sz_freigrenze: "13./14. Pension: bis zu dieser Summe gar keine Steuer.", svs_grenze: "Neue Selbständige: Pflichtversicherung erst über diesem Jahresgewinn.",
+  svs_hbgl: "Höchstbeitragsgrundlage: darüber keine weiteren Beiträge.", svs_mbgl: "Mindestbeitragsgrundlage: Beiträge werden mindestens davon berechnet.",
+  svs_uv: "Fixer Unfallversicherungsbeitrag pro Monat.", gsvg_ku_gewinn: "Gewerbe: KV/PV-Befreiung nur bis zu diesem Jahresgewinn.",
+  gsvg_ku_umsatz: "Gewerbe: KV/PV-Befreiung nur bis zu diesem Jahresumsatz.",
+  wko_grundumlage: "Wirtschaftskammer-Grundumlage pro Jahr – hängt von Bundesland und Fachgruppe ab. Den genauen Betrag nennt Ihre WKO (IT: Fachgruppe UBIT).",
+  ba_basis: "Basispauschalierung: Betriebsausgaben in % vom Umsatz (ab 2026: 15 %; manche Tätigkeiten niedriger).",
+  ba_ku_dl: "Kleinunternehmerpauschalierung für Dienstleistungsbetriebe.", ba_ku_sonst: "Kleinunternehmerpauschalierung für alle anderen Betriebe.",
+  ku_grenze: "Umsatzgrenze für die USt-Befreiung und die Kleinunternehmerpauschalierung.",
+};
+function paramAufbauen() {
+  const gruppen = {};
+  for (const [k, g, l, std, eh] of PARAMETER_DEF) (gruppen[g] = gruppen[g] || []).push([k, l, std, eh]);
+  $("paramGrid").innerHTML = Object.entries(gruppen).map(([g, ein]) => `<fieldset class="box"><legend>${esc(g)}</legend>${ein.map(([k, l, std, eh]) =>
+    `<div class="prow" id="pr_${k}" data-tip="${esc((PARAM_TIPPS[k] ? PARAM_TIPPS[k] + "\n\n" : "") + "Standardwert 2026: " + zt(std) + " " + eh)}"><label for="p_${k}">${esc(l)}</label><input type="text" inputmode="decimal" class="zahl" id="p_${k}"><span class="unit small muted">${esc(eh)}</span><div class="std">gespeichert: <span id="ps_${k}"></span> · Standard: ${zt(std)}</div></div>`).join("")}</fieldset>`).join("");
+  $("paramGrid").addEventListener("input", ev => {
+    const k = ev.target.id.slice(2); if (!DEF[k]) return;
+    let v; try { v = zahl(ev.target.value); ev.target.classList.remove("fehler"); } catch (x) { ev.target.classList.add("fehler"); return; }
+    $("pr_" + k).classList.toggle("geaendert", Math.abs(v - zustand.p[k]) > 1e-9);
+    $("ps_" + k).textContent = zt(zustand.p[k]);
+  });
+}
+function paramAnzeigen() {
+  for (const k of Object.keys(DEF)) { $("p_" + k).value = zahlText(zustand.p[k]); $("p_" + k).classList.remove("fehler"); $("pr_" + k).classList.remove("geaendert"); }
+}
+async function paramSpeichern() {
+  const neu = {};
+  for (const k of Object.keys(DEF)) {
+    try { neu[k] = zahl($("p_" + k).value); } catch (x) { zeigeToast(`Ungültiger Wert bei „${DEF[k].label}“.`); $("p_" + k).focus(); return; }
+  }
+  const diff = unterschiede(zustand.p, neu);
+  if (!diff.length) { zeigeToast("Keine Parameter geändert."); return; }
+  await parameterAendern(neu, `manuelle Änderung (${diff.length} Wert(e))`, {param_quelle: `manuell bearbeitet am ${datumDe(heute())}`, param_stand: heute()});
+  tabModus = null;
+  zeigeToast(`${diff.length} Parameter gespeichert – der vorherige Stand liegt in der Historie.`);
+}
+
+/* =====================================================================
+   Werte prüfen, Ermitteln, Historie
+   ===================================================================== */
+function pruefAnzeigen() {
+  const [stufe, meld] = pruefstatus(zustand.p, zustand.einst), e = zustand.einst;
+  const t = {gruen: "✔ Die Werte sind aktuell und plausibel.", gelb: "⚠ Bitte die Werte prüfen.", rot: "✖ Die Werte sind veraltet oder fehlerhaft – bitte aktualisieren."};
+  $("ampel").className = "ampel " + stufe; $("ampel").textContent = t[stufe];
+  $("standInfo").textContent = `Werte für ${e.param_jahr} · Quelle: ${e.param_quelle || "–"} · Stand: ${datumDe(e.param_stand)} · zuletzt geprüft: ${datumDe(e.geprueft_am)} · Historie: ${zustand.historie.length} Einträge`;
+  $("meldungen").innerHTML = meld.length ? meld.map(([s, m]) => `<li class="${s}">${esc(m)}</li>`).join("") : `<li>Keine Auffälligkeiten gefunden.</li>`;
+  if (document.activeElement !== $("paramJahr")) $("paramJahr").value = e.param_jahr;
+  if (document.activeElement !== $("pruefIntervall")) $("pruefIntervall").value = e.pruef_intervall_tage;
+  // Kopfzeile + Hinweisbalken
+  $("chipJahrW").textContent = e.param_jahr;
+  const chip = $("chipStatus");
+  chip.className = "chip " + {gruen: "ok", gelb: "warn", rot: "bad"}[stufe];
+  chip.textContent = {gruen: "Werte geprüft", gelb: "Werte prüfen", rot: "Werte veraltet"}[stufe];
+  const erinnern = e.erinnern_ab && heute() < e.erinnern_ab;
+  if (stufe !== "gruen" && !erinnern) {
+    $("banner").className = "banner " + (stufe === "rot" ? "bad" : "warn");
+    $("bannerTxt").innerHTML = meld.slice(0, 2).map(m => `<div>⚠ ${esc(m[1])}</div>`).join("") + (meld.length > 2 ? `<div>… und ${meld.length - 2} weitere Hinweise.</div>` : "");
+    $("banner").hidden = false;
+  } else $("banner").hidden = true;
+}
+function zieljahr() { const j = parseInt($("zieljahr").value, 10); return j >= 2020 && j <= 2100 ? j : Math.max(+zustand.einst.param_jahr, new Date().getFullYear()); }
+function quellenAnzeigen() {
+  const j = zieljahr();
+  $("quellenListe").innerHTML = WEBQUELLEN.map(([n, u, inh]) => `<a href="${esc(u.replace("{jahr}", j))}" target="_blank" rel="noopener"><b>${esc(n.replace("{jahr}", j))}</b><span>${esc(inh)}</span></a>`).join("");
+  $("themenSuche").innerHTML = THEMEN_SUCHE.map(([n, q]) => `<a href="https://www.google.com/search?q=${encodeURIComponent(q.replace("{jahr}", j))}" target="_blank" rel="noopener">${esc(n)}</a>`).join(" · ");
+}
+function zeilenAusWerten(alt, neu, kontext) {
+  return PARAMETER_DEF.filter(d => d[0] in neu).map(d => zeile(d[0], alt[d[0]], neu[d[0]], true, kontext));
+}
+function zeile(key, alt, neu, jahrOk, kontext, quellen) {
+  const gleich = alt !== undefined && Math.abs(neu - alt) < 1e-9;
+  return {key, alt, neu, gleich, jahr_ok: jahrOk, kontext, quellen: quellen || [], an: !gleich && jahrOk};
+}
+function vergleich(titel, info, zeilen, jahr, knopf = "Ausgewählte übernehmen & speichern") {
+  return new Promise(resolve => {
+    const abw = zeilen.filter(z => !z.gleich).length;
+    const bestaetigt = zeilen.filter(z => z.jahr_ok).length, vollst = bestaetigt >= 0.6 * PARAMETER_DEF.length - 15;
+    $("modalTitel").textContent = titel;
+    $("modalInfo").innerHTML = `${esc(info).replace(/\n/g, "<br>")}<br>${zeilen.length} Wert(e): ${abw} abweichend, ${zeilen.length - abw} bestätigen Ihre aktuellen Werte. Zeile anklicken zeigt die Fundstelle.`;
+    $("modalInhalt").innerHTML = `<div class="tabwrap"><table class="vgl"><thead><tr><th>übernehmen</th><th>Gruppe</th><th>Parameter</th><th>aktuell</th><th>neu/gefunden</th><th></th><th>Status</th><th>Jahr</th></tr></thead><tbody>${
+      zeilen.map((z, i) => `<tr data-i="${i}" class="${z.gleich ? "gleich" : "abw"}"><td><input type="checkbox" aria-label="übernehmen" ${z.an ? "checked" : ""} ${z.gleich ? "disabled" : ""}></td><td>${esc(DEF[z.key].gruppe)}</td><td>${esc(DEF[z.key].label)}</td><td class="w">${zt(z.alt)}</td><td class="w">${zt(z.neu)}</td><td>${esc(DEF[z.key].einheit)}</td><td>${z.gleich ? "= gleich" : "abweichend"}</td><td>${z.jahr_ok ? "✔ passt" : "? unbestätigt"}</td></tr>`).join("")
+    }</tbody></table></div><div class="fund" id="fund">Zeile anklicken, um die Fundstelle zu sehen.</div>`;
+    const jahrBox = jahr ? `<label class="check"><input type="checkbox" id="vglJahr" ${vollst ? "checked" : ""}> Werte gelten danach für Jahr ${jahr}${vollst ? "" : " (nur wenige Werte gefunden – erst setzen, wenn alle Werte geprüft sind)"}</label>` : "";
+    $("modalFuss").innerHTML = `<button class="btn klein" type="button" id="vglAlle">Alle abweichenden</button><button class="btn klein" type="button" id="vglKeine">Keine</button>${jahrBox}<div class="rechts"><button class="btn" type="button" id="vglAbbr">Abbrechen</button><button class="btn primary" type="button" id="vglOk">${esc(knopf)}</button></div>`;
+    $("modal").hidden = false;
+    const tb = $("modalInhalt").querySelector("tbody");
+    tb.addEventListener("click", ev => {
+      const tr = ev.target.closest("tr"); if (!tr) return;
+      const z = zeilen[+tr.dataset.i];
+      if (ev.target.type === "checkbox") z.an = ev.target.checked;
+      tb.querySelectorAll("tr.sel").forEach(t => t.classList.remove("sel")); tr.classList.add("sel");
+      $("fund").textContent = (z.kontext || "–") + (z.quellen.length > 1 ? "\n\nGefunden in: " + z.quellen.join(", ") : "") + (z.jahr_ok ? "" : "\n\n? Bei diesem Wert steht keine passende Jahresangabe – bitte prüfen.");
+    });
+    const alle = an => tb.querySelectorAll("tr").forEach(tr => { const z = zeilen[+tr.dataset.i]; if (!z.gleich) { z.an = an; tr.querySelector("input").checked = an; } });
+    $("vglAlle").onclick = () => alle(true); $("vglKeine").onclick = () => alle(false);
+    const zu = wert => { $("modal").hidden = true; resolve(wert); };
+    $("vglAbbr").onclick = () => zu(null);
+    $("vglOk").onclick = () => zu({werte: Object.fromEntries(zeilen.filter(z => z.an && !z.gleich).map(z => [z.key, z.neu])), jahrSetzen: !!($("vglJahr") && $("vglJahr").checked)});
+    const erste = tb.querySelector("tr.abw") || tb.querySelector("tr"); if (erste) erste.click();
+  });
+}
+function frage(titel, text, ja = "Ja", nein = "Abbrechen") {
+  return new Promise(resolve => {
+    $("modalTitel").textContent = titel; $("modalInfo").textContent = ""; $("modalInhalt").innerHTML = `<p>${esc(text).replace(/\n/g, "<br>")}</p>`;
+    $("modalFuss").innerHTML = `<div class="rechts"><button class="btn" type="button" id="fNein">${esc(nein)}</button><button class="btn primary" type="button" id="fJa">${esc(ja)}</button></div>`;
+    $("modal").hidden = false;
+    $("fNein").onclick = () => { $("modal").hidden = true; resolve(false); };
+    $("fJa").onclick = () => { $("modal").hidden = true; resolve(true); };
+  });
+}
+async function ergebnisZeigen(zeilen, meta) {
+  if (!zeilen.length) { await frage("Keine Werte gefunden", "Im Text wurden keine passenden Werte gefunden.\n\nTipp: Prüfen Sie, ob der ganze Seitentext kopiert wurde (Strg+A, Strg+C), oder tragen Sie die Werte im Reiter „Parameter“ ein.", "OK", "Schließen"); return; }
+  const abw = zeilen.filter(z => !z.gleich), jahrNeu = meta.jahr;
+  if (!abw.length && +jahrNeu === +zustand.einst.param_jahr) {
+    Object.assign(zustand.einst, {geprueft_am: heute(), erinnern_ab: ""}); await Store.set("einst", zustand.einst); pruefAnzeigen();
+  }
+  const info = `Quelle: ${meta.quelle} · gesucht für Jahr ${jahrNeu}\nWICHTIG: Automatisch ermittelte Werte sind Vorschläge – bitte die Fundstelle prüfen.`;
+  const res = await vergleich("Gefundene Werte – prüfen und übernehmen", info, zeilen, +jahrNeu !== +zustand.einst.param_jahr ? jahrNeu : null);
+  if (!res) return;
+  const metaNeu = {param_stand: meta.stand || heute(), geprueft_am: heute(), erinnern_ab: ""};
+  if (Object.keys(res.werte).length) metaNeu.param_quelle = meta.quelle;
+  if (res.jahrSetzen && jahrNeu) metaNeu.param_jahr = +jahrNeu;
+  const geaendert = await parameterAendern(res.werte, `Übernahme aus ${meta.quelle}`, metaNeu);
+  historieAnzeigen(); pruefAnzeigen();
+  zeigeToast(geaendert && Object.keys(res.werte).length ? `${Object.keys(res.werte).length} Wert(e) übernommen – die bisherigen Werte stehen in der Historie.` : "Keine Werte geändert. Prüfdatum gespeichert.");
+}
+function paketLesen(d) {
+  const werte = d && d.parameter ? d.parameter : d;
+  if (!werte || typeof werte !== "object" || Array.isArray(werte)) throw new Error("Unbekanntes Format.");
+  const param = {};
+  for (const [k, v] of Object.entries(werte)) if (k in PARAMETER_STANDARD) { const n = Number(v); if (!isFinite(n)) throw new Error(`Parameter „${k}“ ist keine Zahl.`); param[k] = n; }
+  if (!Object.keys(param).length) throw new Error("Keine bekannten Parameter gefunden.");
+  return {jahr: d.parameter ? (+d.jahr || null) : null, stand: d.parameter ? String(d.stand || "") : "", quelle: d.parameter ? String(d.quelle || "") : "", parameter: param};
+}
+function historieAnzeigen() {
+  const h = zustand.historie;
+  $("historie").innerHTML = `<thead><tr><th>gesichert am</th><th>gesichert vor / Anlass</th><th>Werte-Jahr</th><th>Quelle der Werte</th><th>Abweichungen zu jetzt</th><th></th></tr></thead><tbody>${
+    h.length ? h.map((e, i) => { const n = unterschiede(zustand.p, e.parameter || {}).length;
+      return `<tr data-i="${i}"><td>${esc(zeitDe(e.zeit))}</td><td>${esc(e.anlass || "")}</td><td>${esc(e.jahr ?? "")}</td><td>${esc(e.quelle || "")}</td><td>${n ? n + " Wert(e)" : "identisch"}</td><td style="white-space:nowrap"><button class="btn klein" type="button" data-a="vgl" data-tip="Zeigt alt/neu. Sie wählen, welche Werte zurückgeholt werden.">Vergleichen…</button> <button class="btn klein" type="button" data-a="ganz" data-tip="Setzt ALLE Werte auf diesen Stand zurück (der jetzige Stand wird vorher gesichert).">Wiederherstellen</button> <button class="btn klein" type="button" data-a="del" data-tip="Entfernt den Eintrag aus der Historie.">Löschen</button></td></tr>`; }).join("")
+    : `<tr><td colspan="6" class="muted">Noch keine Einträge. Sobald Sie Werte ändern, wird der vorherige Stand hier gesichert.</td></tr>`}</tbody>`;
+}
+async function historieAktion(a, i) {
+  const e = zustand.historie[i]; if (!e) return;
+  if (a === "vgl") {
+    const zeilen = zeilenAusWerten(zustand.p, e.parameter, `Historie: Stand vom ${zeitDe(e.zeit)} – ${e.quelle || ""}`).filter(z => !z.gleich);
+    if (!zeilen.length) { zeigeToast("Dieser Stand ist identisch mit den aktuellen Werten."); return; }
+    const res = await vergleich("Werte aus der Historie zurückholen", `Stand vom ${zeitDe(e.zeit)} (Werte-Jahr ${e.jahr}, ${e.quelle || ""})`, zeilen, e.jahr, "Ausgewählte zurückholen & speichern");
+    if (!res || !Object.keys(res.werte).length) return;
+    const meta = {param_quelle: `aus Historie vom ${zeitDe(e.zeit)} (${e.quelle || ""})`};
+    if (res.jahrSetzen && e.jahr) meta.param_jahr = +e.jahr;
+    await parameterAendern(res.werte, `Wiederherstellung (teilweise) vom ${zeitDe(e.zeit)}`, meta);
+  } else if (a === "ganz") {
+    if (!await frage("Wiederherstellen", `Alle Werte auf den Stand vom ${zeitDe(e.zeit)} zurücksetzen?\n\nDer jetzige Stand wird vorher in der Historie gesichert.`, "Wiederherstellen")) return;
+    await parameterAendern(e.parameter, `Wiederherstellung vom ${zeitDe(e.zeit)}`, {param_jahr: +e.jahr || zustand.einst.param_jahr, param_quelle: e.quelle || "", param_stand: e.stand || ""});
+    zeigeToast("Stand wiederhergestellt.");
+  } else if (a === "del") {
+    if (!await frage("Eintrag löschen", "Markierten Eintrag aus der Historie löschen?", "Löschen")) return;
+    zustand.historie.splice(i, 1);
+    await Store.historieLoeschen(e.id);
+  }
+  historieAnzeigen(); pruefAnzeigen();
+}
+
+/* =====================================================================
+   Dateien speichern (claude.ai: Download-Freigabe · lokal: Browser-Download)
+   ===================================================================== */
+async function dateiSpeichern(name, inhalt) {
+  if (Store.downloads) {
+    try { await Store.downloads.save({filename: name, data: inhalt}); zeigeToast(`„${name}“ gespeichert.`); }
+    catch (e) { if (e && e.code !== "declined") zeigeToast("Speichern nicht möglich: " + (e.message || e.code)); }
+    return;
+  }
+  try {
+    const url = URL.createObjectURL(new Blob([inhalt], {type: "text/plain;charset=utf-8"}));
+    const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) { zeigeToast("Speichern nicht möglich."); }
+}
+
+/* =====================================================================
+   Hilfeblasen, Toast, Tabs
+   ===================================================================== */
+const tip = $("tip"); let tipEl = null, tipTimer = null;
+function tipZeigen(el, x, y) {
+  tip.textContent = el.dataset.tip; tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y + 18;
+  if (left + r.width > innerWidth - 8) left = Math.max(8, innerWidth - r.width - 8);
+  if (top + r.height > innerHeight - 8) top = Math.max(8, y - r.height - 12);
+  tip.style.left = left + "px"; tip.style.top = top + "px";
+}
+document.addEventListener("pointerover", ev => {
+  if (ev.pointerType === "touch") return;
+  const el = ev.target.closest("[data-tip]");
+  if (el === tipEl) return;
+  tipEl = el; clearTimeout(tipTimer); tip.hidden = true;
+  if (el && el.dataset.tip) { const x = ev.clientX, y = ev.clientY; tipTimer = setTimeout(() => tipZeigen(el, x, y), 450); }
+});
+document.addEventListener("pointerdown", () => { clearTimeout(tipTimer); tip.hidden = true; tipEl = null; });
+document.addEventListener("contextmenu", ev => { // langes Tippen am Handy zeigt die Erklärung
+  const el = ev.target.closest("[data-tip]"); if (!el || ev.target.closest("input,textarea,select,a")) return;
+  ev.preventDefault(); tipEl = el; const r = el.getBoundingClientRect(); tipZeigen(el, r.left, r.bottom);
+});
+let toastTimer;
+function zeigeToast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 3800); }
+function tabWaehlen(name) {
+  zustand.tab = name;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name ? "true" : "false"));
+  for (const t of ["berechnung","tabelle","parameter","werte","hilfe"]) $("tab-" + t).hidden = t !== name;
+  if (name === "tabelle") tabelleAnzeigen();
+  if (name === "werte") { pruefAnzeigen(); historieAnzeigen(); quellenAnzeigen(); }
+  try { localStorage.setItem("pensionsrechner_tab", name); } catch (e) {}
+}
+
+/* =====================================================================
+   Hilfe-Text
+   ===================================================================== */
+function hilfeAufbauen() {
+  const j = Math.max(+zustand.einst.param_jahr, new Date().getFullYear());
+  const quellen = WEBQUELLEN.map(([n, u, inh]) => `<li><a href="${esc(u.replace("{jahr}", j))}" target="_blank" rel="noopener">${esc(n.replace("{jahr}", j))}</a> – ${esc(inh)}</li>`).join("");
+  const S = [
+    ["h-start", "Kurzanleitung", `<p>Der Rechner zeigt, wie viel von einem selbständigen Zuverdienst neben einer regulären Alterspension netto übrig bleibt – nach Sozialversicherung (SVS) und Einkommensteuer. Bei der regulären Alterspension (ab dem Regelpensionsalter) darf unbegrenzt dazuverdient werden; die Pension wird nicht gekürzt.</p>
+      <p class="box">Fahren Sie mit der Maus über ein Eingabefeld, eine Ergebniszeile oder eine Tabellenüberschrift – nach einem Moment erscheint eine Hilfeblase. Am Handy: lange auf die Zeile tippen.</p>
+      <ol><li>Tätigkeit wählen: „Neuer Selbständiger“ (ohne Gewerbeschein) oder „Gewerbetreibender“ (mit Gewerbeschein).</li><li>Pension eintragen (brutto pro Monat, pro Jahr oder netto pro Monat).</li><li>Zuverdienst eintragen – z. B. Stundensatz, Stunden pro Woche und Arbeitswochen.</li><li>Betriebsausgaben wählen (tatsächliche Ausgaben oder Pauschale).</li><li>Ergebnis rechts ablesen, rote Hinweise beachten. Im Reiter „Tabelle &amp; Diagramm“ sehen Sie, wie sich mehr oder weniger Stunden auswirken.</li></ol>
+      <p>Die Berechnung aktualisiert sich bei jeder Eingabe. Die Beispielwerte beim ersten Öffnen sind nur ein Muster.</p>`],
+    ["h-gewerbe", "Gewerbeschein – ja oder nein?", `<p>Entscheidend ist, ob die Tätigkeit unter die Gewerbeordnung fällt.</p>
+      <p><b>Kein Gewerbeschein → „Neuer Selbständiger“:</b> Vortragende, Lehrende, Trainer in der Erwachsenenbildung · Schriftsteller, Journalisten, Übersetzer, Künstler · wissenschaftliche Tätigkeit, Gutachter · freie Gesundheitsberufe.</p>
+      <p><b>Gewerbeschein nötig → „Gewerbetreibender (GSVG)“:</b> IT-Dienstleistungen, IT-Consulting, Softwareentwicklung, Systembetreuung (freies Gewerbe „Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik“ – kein Befähigungsnachweis, Anmeldung online über GISA bzw. das Unternehmensserviceportal) · Unternehmensberatung (reglementiert) · Lebens- und Sozialberatung, Bürodienstleistungen, Handel, Handwerk.</p>
+      <p>Ohne Gewerbeschein und ohne Selbständigkeit geht es nur als freier Dienstnehmer oder Angestellter beim Auftraggeber – das berechnet dieser Rechner nicht.</p>
+      <p class="box">Im Zweifel: Gründerservice der Wirtschaftskammer (kostenlos). Bei nur einem Auftraggeber auch nach Scheinselbständigkeit fragen.</p>`],
+    ["h-unterschied", "Unterschied in der Berechnung", `<p><b>Neuer Selbständiger:</b> Versicherungspflicht erst, wenn der Jahresgewinn (vor SVS) 6.613,20 € übersteigt – darunter keine Beiträge, auch keine Unfallversicherung. Darüber Beiträge auf den GESAMTEN Gewinn. Keine Kammermitgliedschaft.</p>
+      <p><b>Gewerbetreibender:</b> pflichtversichert ab dem Gewerbeschein. Pensionisten können die Befreiung von Kranken- und Pensionsversicherung beantragen (Kleinunternehmer-Ausnahme), wenn Umsatz ≤ 55.000 € und Gewinn ≤ 6.613,20 €. Wird eine Grenze überschritten, fällt die Befreiung rückwirkend für das ganze Jahr weg. Ohne Befreiung: Mindestbeiträge auch bei kleinem Gewinn (rund 160 € pro Monat). Unfallversicherung (12,95 €/Monat) immer. WKO-Grundumlage (ca. 100–400 €/Jahr, unter „Parameter“ einstellen) – bei tatsächlichen Ausgaben absetzbar, bei Pauschalierung abgegolten.</p>
+      <p><b>Neugründer:</b> In den ersten beiden Kalenderjahren wird die KV-Beitragsgrundlage nicht nachbemessen (fix auf der Mindestbeitragsgrundlage). Ob Sie als Neugründer gelten, bestätigt die SVS.</p>`],
+    ["h-pension", "Pension", `<ul><li>Brutto pro Monat (14× jährlich): Betrag laut Pensionsbescheid; 13./14. Pension werden automatisch berücksichtigt.</li><li>Brutto pro Jahr: Jahressumme aller 14 Bezüge.</li><li>Netto pro Monat: laufende Auszahlung – das Brutto wird zurückgerechnet.</li><li>Erhöhter Pensionistenabsetzbetrag: nur bei Ehe/Partnerschaft, Partner-Einkünfte höchstens 2.720 €/Jahr, kein Alleinverdienerabsetzbetrag.</li></ul>
+      <p>Von der Pension werden KV (Standard 6 %) und Lohnsteuer abgezogen. Die 13./14. Pension wird nach Abzug der KV mit 6 % besteuert (Freibetrag 620 €, steuerfrei bis 2.100 €).</p>`],
+    ["h-zuverdienst", "Zuverdienst und Umsatzsteuer", `<p>Eingabe als Stundensatz × Stunden × Wochen, als Jahres- oder Monatsumsatz oder direkt als Gewinn vor SVS. Typisch sind 44–48 Arbeitswochen.</p>
+      <p>Stundensatz und Umsatz verstehen sich <b>ohne Umsatzsteuer</b>. Als Kleinunternehmer (Umsatz bis 55.000 €) verrechnen Sie keine USt – dann ist das einfach Ihr Honorar. Darüber schlagen Sie 20 % USt auf die Rechnung auf und führen sie ans Finanzamt ab; sie ist kein Einkommen. Zahlt ein Kunde nur einen Betrag „inklusive allem“, tragen Sie diesen ÷ 1,2 als Stundensatz ein.</p>`],
+    ["h-ba", "Betriebsausgaben", `<ul><li>Tatsächliche Ausgaben pro Jahr oder Monat: Laptop, Software, Fahrtkosten, Büro, Fachliteratur, Fortbildung, Internet, Steuerberatung.</li><li>Prozent vom Umsatz.</li><li>Basispauschalierung: ab 2026 15 % vom Umsatz (2025: 13,5 %), Umsatzgrenze 420.000 €; für bestimmte Tätigkeiten gilt ein niedrigerer Satz. Zusätzlich absetzbar u. a. Wareneinkauf, Löhne, Fremdleistungen.</li><li>Kleinunternehmerpauschalierung (Umsatz bis 55.000 €): 20 % für Dienstleistungsbetriebe laut Verordnung, sonst 45 % – welcher Satz gilt, bitte mit Steuerberatung/WKO klären.</li></ul><p>SVS-Beiträge sind bei allen Varianten zusätzlich absetzbar.</p>`],
+    ["h-svs", "SVS-Beiträge", `<p>Krankenversicherung 6,8 % · Pensionsversicherung 18,5 % (erhöht später die Pension) · Selbständigenvorsorge 1,53 % · Unfallversicherung 12,95 €/Monat. Beitragsgrundlage = Gewinn vor SVS, mindestens 6.613,20 €, höchstens 97.020 €.</p>
+      <p>In den ersten Jahren schreibt die SVS vorläufige Beiträge vor; die endgültige Abrechnung kommt nach dem Steuerbescheid. Der Rechner zeigt das endgültige Ergebnis eines Jahres. Neue Selbständige melden ein Überschreiten der Grenze der SVS selbst – sonst kommt ein Zuschlag von 9,3 % dazu.</p>`],
+    ["h-ungue", "Ungünstiger Bereich knapp über der Grenze", `<p>Wer die Versicherungsgrenze (bei Gewerbe: die Befreiungsgrenze) knapp überschreitet, zahlt sofort Beiträge auf den ganzen Gewinn – rund 27 % zzgl. Unfallversicherung. Dadurch bleibt netto WENIGER als knapp unter der Grenze. Der Rechner ermittelt, ab welchem Umsatz sich der Mehrverdienst wieder lohnt, und warnt rot. In der Tabelle sind diese Zeilen rot, im Diagramm ist der Bereich schattiert.</p><p>Faustregel: sicher unter der Grenze bleiben oder deutlich darüber liegen.</p>`],
+    ["h-est", "Einkommensteuer", `<ul><li>Tarif 2026: bis 13.539 € 0 %, bis 21.992 € 20 %, bis 36.458 € 30 %, bis 70.365 € 40 %, bis 104.859 € 48 %, bis 1 Mio. € 50 %, darüber 55 %.</li><li>Grundfreibetrag: 15 % des Gewinns, höchstens von 33.000 € (max. 4.950 €).</li><li>Pension und Gewinn werden zusammen veranlagt. Angezeigt wird die MEHRSTEUER durch den Zuverdienst, die bei der Veranlagung nachzuzahlen ist.</li><li>Veranlagungsfreibetrag: Zuverdienst-Einkünfte bis 730 € steuerfrei, eingeschliffen bis 1.460 €.</li><li>Pensionistenabsetzbetrag 2026: 1.020 € (erhöht 1.502 €), eingeschliffen nach den Pensionseinkünften.</li></ul>`],
+    ["h-tabelle", "Tabelle & Diagramm", `<p>Die Tabelle variiert die Stunden pro Woche (bei Stundensatz-Eingabe) bzw. den Jahresumsatz. Von/Bis/Schritt sind frei wählbar. Farben: blau = unter der Grenze bzw. befreit, rot = ungünstig, orange = Mindestbeitrag, grün = lohnend. Export als CSV für Excel.</p>`],
+    ["h-werte", "Werte prüfen & aktualisieren", `<p>Steuer- und SVS-Werte ändern sich jedes Jahr. Ein farbiger Hinweisbalken erscheint, wenn die Werte für ein früheres Jahr gelten, die letzte Prüfung länger als das Prüfintervall zurückliegt, im Dezember die neuen Werte anstehen oder Werte unplausibel sind. „In 7 Tagen erinnern“ blendet ihn vorübergehend aus.</p>
+      <p><b>So ermitteln Sie aktuelle Werte</b> (Reiter „Werte prüfen &amp; Historie“):</p>
+      <ol><li>„Werte suchen für Jahr“ einstellen.</li><li>Eine Quelle aus der Liste öffnen (neuer Tab), dort Strg+A und Strg+C.</li><li>Den Text ins Feld einfügen (mehrere Seiten nacheinander sind möglich) und „Werte ermitteln“ klicken.</li><li>Die Tabelle zeigt aktuellen und gefundenen Wert, Status, ob das Jahr passt, und die Fundstelle. Abweichende Werte mit passendem Jahr sind vorausgewählt. Prüfen, auswählen, übernehmen.</li></ol>
+      <p>Warum Kopieren? Ein Browser darf aus Sicherheitsgründen fremde Seiten nicht selbst abrufen. Die Windows-Version (EXE) kann die Seiten direkt laden.</p>
+      <p>Die Erkennung liefert VORSCHLÄGE: Sie sucht Zahlen bei passenden Begriffen und prüft Typ, Größenordnung und Jahr. Seiten ändern ihren Aufbau – deshalb immer die Fundstelle ansehen.</p>
+      <p><b>Mögliche Quellen</b> (das Jahr wird eingesetzt):</p><ul>${quellen}</ul>
+      <p>Weitere Wege: Parameterdatei importieren/exportieren (kompatibel mit der EXE), Vergleich mit den eingebauten Werten 2026, manuelle Änderung im Reiter „Parameter“. Zum Abschluss das Werte-Jahr kontrollieren und „Werte sind geprüft und aktuell“ klicken.</p>`],
+    ["h-historie", "Historie – frühere Werte wiederherstellen", `<p>Bei JEDER Änderung der Rechenwerte – manuell, aus Seitentext, Parameterdatei, Zurücksetzen oder Wiederherstellen – wird der bisherige Stand automatisch gesichert (bis 300 Einträge). Auch ein Wechsel des Werte-Jahres wird gesichert.</p>
+      <ul><li>„Vergleichen…“: alt/neu nebeneinander – einzelne Werte zurückholen.</li><li>„Wiederherstellen“: alle Werte des Eintrags inkl. Jahr und Quelle.</li><li>„Aktuellen Stand sichern“: Momentaufnahme mit Kommentar, ohne etwas zu ändern.</li></ul><p>Auch eine Wiederherstellung sichert vorher den aktuellen Stand – nichts geht verloren.</p>`],
+    ["h-speicher", "Wo werden meine Daten gespeichert?", `<p>Auf claude.ai geöffnet: in Ihrem Konto, privat – andere Personen, mit denen Sie die Seite teilen, sehen Ihre Werte nicht und haben eigene. Als Datei im Browser geöffnet: im Speicher dieses Browsers (beim Löschen der Browserdaten geht er verloren – exportieren Sie wichtige Stände als Parameterdatei).</p><p>Gespeichert werden Parameter, Einstellungen, Historie, Szenarien und Ihre letzten Eingaben.</p>`],
+    ["h-grenzen", "Nicht berücksichtigt", `<ul><li>Umsatzsteuer über der Kleinunternehmergrenze (nur Warnung).</li><li>Investitionsbedingter Gewinnfreibetrag, Sonderausgaben, außergewöhnliche Belastungen, Kirchenbeitrag, Familienbonus.</li><li>Negativsteuer (SV-Rückerstattung) bei geringer Pension.</li><li>Vorläufige SVS-Beitragsgrundlagen, Beitragsrückerstattung bei Mehrfachversicherung im Detail, Höherversicherung aus PV-Beiträgen.</li><li>Kammerumlage 1/2 und Fachgruppen-Details.</li></ul><p>Alle Angaben ohne Gewähr. Der Rechner ersetzt keine Steuer- oder Rechtsberatung.</p>`],
+  ];
+  $("hilfeNav").innerHTML = S.map(([id, t]) => `<a href="#${id}" data-hilfe="${id}">${esc(t)}</a>`).join("");
+  $("hilfeText").innerHTML = S.map(([id, t, h]) => `<h2 id="${id}">${esc(t)}</h2>${h}`).join("");
+}
+function hilfeZeigen(id) { tabWaehlen("hilfe"); const el = $(id); if (el) el.scrollIntoView({behavior: "smooth", block: "start"}); }
+
+/* =====================================================================
+   Start und Ereignisse
+   ===================================================================== */
+function alles() { rechnen(); pruefAnzeigen(); if (zustand.tab === "werte") historieAnzeigen(); if (zustand.tab === "tabelle") tabelleAnzeigen(); }
+function szenarienAnzeigen() { $("szenarioListe").innerHTML = Object.keys(zustand.szenarien).sort().map(n => `<option value="${esc(n)}"></option>`).join(""); }
+
+function verbinden() {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => tabWaehlen(b.dataset.tab)));
+  document.addEventListener("click", ev => { const a = ev.target.closest("a[data-hilfe]"); if (a) { ev.preventDefault(); hilfeZeigen(a.dataset.hilfe); } });
+  $("eingabe").addEventListener("input", eingabeGeaendert);
+  $("eingabe").addEventListener("change", eingabeGeaendert);
+  $("eingabe").addEventListener("submit", ev => ev.preventDefault());
+  ["tabVon","tabBis","tabSchritt"].forEach(id => $(id).addEventListener("input", tabelleAnzeigen));
+  $("csvExport").onclick = () => tabDaten && dateiSpeichern(`Pensionsrechner_Tabelle_${heute()}.csv`, csvText());
+  $("berichtExport").onclick = () => zustand.ergebnis && dateiSpeichern(`Pensionsrechner_${heute()}.txt`, berichtText());
+  $("eingabenStandard").onclick = () => { eingabenSetzen(EINGABEN_STANDARD); eingabeGeaendert(); };
+  $("szSpeichern").onclick = async () => {
+    const n = $("szenarioName").value.trim(); if (!n) { zeigeToast("Bitte zuerst einen Namen für das Szenario eingeben."); return; }
+    zustand.szenarien[n] = {...zustand.e}; await Store.set("szenarien", zustand.szenarien); szenarienAnzeigen(); zeigeToast(`Szenario „${n}“ gespeichert.`);
+  };
+  $("szLaden").onclick = () => {
+    const n = $("szenarioName").value.trim(); if (!zustand.szenarien[n]) { zeigeToast("Szenario nicht gefunden."); return; }
+    eingabenSetzen({...EINGABEN_STANDARD, ...zustand.szenarien[n]}); eingabeGeaendert(); zeigeToast(`Szenario „${n}“ geladen.`);
+  };
+  $("szLoeschen").onclick = async () => {
+    const n = $("szenarioName").value.trim(); if (!zustand.szenarien[n]) return;
+    if (!await frage("Szenario löschen", `Szenario „${n}“ löschen?`, "Löschen")) return;
+    delete zustand.szenarien[n]; await Store.set("szenarien", zustand.szenarien); szenarienAnzeigen(); $("szenarioName").value = "";
+  };
+  $("paramSpeichern").onclick = paramSpeichern;
+  $("paramVerwerfen").onclick = paramAnzeigen;
+  $("paramStandard").onclick = async () => {
+    if (!await frage("Standardwerte", "Alle Parameter auf die eingebauten Standardwerte 2026 zurücksetzen?\n\nDer jetzige Stand wird vorher in der Historie gesichert.", "Zurücksetzen")) return;
+    await parameterAendern({...PARAMETER_STANDARD}, "Zurücksetzen auf Standardwerte", {param_jahr: STANDARD_JAHR, param_stand: STANDARD_STAND, param_quelle: EINST_STANDARD.param_quelle});
+    tabModus = null; zeigeToast("Standardwerte 2026 gesetzt.");
+  };
+  $("paramZuWerte").onclick = () => tabWaehlen("werte");
+  $("bannerPruefen").onclick = () => tabWaehlen("werte");
+  $("bannerSpaeter").onclick = async () => {
+    const d = new Date(); d.setDate(d.getDate() + 7); zustand.einst.erinnern_ab = d.toISOString().slice(0, 10);
+    await Store.set("einst", zustand.einst); pruefAnzeigen();
+  };
+  $("paramJahr").addEventListener("change", async () => {
+    const j = parseInt($("paramJahr").value, 10); if (!(j >= 2020 && j <= 2100)) { $("paramJahr").value = zustand.einst.param_jahr; return; }
+    if (j === +zustand.einst.param_jahr) return;
+    await parameterAendern({}, `Wechsel des Werte-Jahres auf ${j}`, {param_jahr: j}); historieAnzeigen();
+  });
+  $("pruefIntervall").addEventListener("change", async () => {
+    const t = parseInt($("pruefIntervall").value, 10); if (!(t >= 0 && t <= 3650)) return;
+    zustand.einst.pruef_intervall_tage = t; await Store.set("einst", zustand.einst); pruefAnzeigen();
+  });
+  $("alsGeprueft").onclick = async () => {
+    Object.assign(zustand.einst, {geprueft_am: heute(), erinnern_ab: ""}); await Store.set("einst", zustand.einst); pruefAnzeigen(); zeigeToast("Prüfdatum gespeichert.");
+  };
+  $("zieljahr").addEventListener("input", quellenAnzeigen);
+  $("textLeeren").onclick = () => { $("seitenText").value = ""; };
+  $("textAuswerten").onclick = async () => {
+    const text = $("seitenText").value;
+    if (text.trim().length < 50) { zeigeToast("Bitte zuerst den Text einer Quelle einfügen."); return; }
+    const j = zieljahr(), titel = text.slice(0, 300);
+    const erg = auswerten([new Seite("eingefügter Seitentext", text, titel)], zustand.p, j);
+    const zeilen = PARAMETER_DEF.filter(d => erg[d[0]]).map(d => { const r = erg[d[0]]; return zeile(d[0], zustand.p[d[0]], r.wert, r.jahr_ok, r.kontext, r.quellen); });
+    await ergebnisZeigen(zeilen, {jahr: j, quelle: "eingefügter Seitentext", stand: heute()});
+  };
+  $("importDatei").addEventListener("change", async ev => {
+    const f = ev.target.files[0]; ev.target.value = ""; if (!f) return;
+    try {
+      const pkt = paketLesen(JSON.parse(await f.text()));
+      await ergebnisZeigen(zeilenAusWerten(zustand.p, pkt.parameter, `Datei ${f.name}`), {jahr: pkt.jahr || +zustand.einst.param_jahr, quelle: pkt.quelle || `Datei ${f.name}`, stand: pkt.stand});
+    } catch (e) { zeigeToast("Datei konnte nicht gelesen werden: " + e.message); }
+  });
+  $("exportDatei").onclick = () => dateiSpeichern(`pensionsrechner_parameter_${zustand.einst.param_jahr}.json`, JSON.stringify({
+    format: "pensionsrechner-parameter", version: 1, jahr: +zustand.einst.param_jahr, stand: heute(), quelle: zustand.einst.param_quelle || "", parameter: zustand.p}, null, 2));
+  $("vglStandard").onclick = () => ergebnisZeigen(zeilenAusWerten(zustand.p, PARAMETER_STANDARD, "Im Rechner eingebaute Werte"), {jahr: STANDARD_JAHR, quelle: "Eingebaute Standardwerte 2026", stand: STANDARD_STAND});
+  $("standSichern").onclick = async () => {
+    const k = $("sicherKommentar").value.trim();
+    const e = await Store.historieNeu(historieEintrag("manuell gesichert" + (k ? ": " + k : "")));
+    if (Store.modus === "konto") zustand.historie.unshift(e);
+    $("sicherKommentar").value = ""; historieAnzeigen(); pruefAnzeigen(); zeigeToast("Aktueller Stand in der Historie gesichert.");
+  };
+  $("historie").addEventListener("click", ev => { const b = ev.target.closest("button[data-a]"); if (b) historieAktion(b.dataset.a, +b.closest("tr").dataset.i); });
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("modal").hidden) { const b = $("vglAbbr") || $("fNein"); if (b) b.click(); } });
+}
+
+async function start() {
+  paramAufbauen(); hilfeAufbauen(); verbinden();
+  eingabenSetzen(zustand.e); modusAnzeigen(zustand.e); paramAnzeigen();
+  $("zieljahr").value = Math.max(+zustand.einst.param_jahr, new Date().getFullYear());
+  let tab = "berechnung"; try { tab = localStorage.getItem("pensionsrechner_tab") || tab; } catch (e) {}
+  tabWaehlen(tab); alles();
+  // gespeicherten Stand laden (Konto oder Browser) und neu anzeigen
+  await Store.init();
+  const [p, einst, e, sz, hist] = await Promise.all([Store.get("param"), Store.get("einst"), Store.get("eingaben"), Store.get("szenarien"), Store.historieLaden()]);
+  if (p) zustand.p = {...PARAMETER_STANDARD, ...p};
+  if (einst) zustand.einst = {...EINST_STANDARD, ...einst};
+  if (e) zustand.e = {...EINGABEN_STANDARD, ...e};
+  if (sz) zustand.szenarien = sz;
+  zustand.historie = hist || [];
+  $("chipSpeicher").textContent = Store.modus === "konto" ? "im Konto gespeichert" : "im Browser gespeichert";
+  $("chipSpeicher").dataset.tip = Store.modus === "konto" ? "Ihre Werte, Historie und Szenarien sind in Ihrem claude.ai-Konto gespeichert – privat, nur für Sie." :
+    "Ihre Werte, Historie und Szenarien sind im Speicher dieses Browsers abgelegt. Für eine Sicherung: Reiter „Werte prüfen“ → Werte exportieren.";
+  eingabenSetzen(zustand.e); modusAnzeigen(zustand.e); paramAnzeigen(); szenarienAnzeigen(); hilfeAufbauen();
+  $("zieljahr").value = Math.max(+zustand.einst.param_jahr, new Date().getFullYear());
+  tabModus = null; alles(); if (zustand.tab === "werte") { historieAnzeigen(); quellenAnzeigen(); }
+}
+start();
+</script>
+
+</body>
+</html>
