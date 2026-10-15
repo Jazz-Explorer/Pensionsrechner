@@ -1,7 +1,7 @@
 {
  "format": "pensionsrechner-werte",
  "version": 1,
- "erstellt": "2026-10-14T04:51:33+00:00",
+ "erstellt": "2026-10-15T04:49:57+00:00",
  "jahr": 2026,
  "quellen": [
   "WKO – Einkommensteuer & Absetzbeträge 2026",
@@ -86,7 +86,7 @@
   "svs_mbgl": {
    "wert": 6613.2,
    "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Mindestbeitragsgrundlage 2026: 551,10 Euro pro Monat (6.613,20 Euro pro Jahr) Höchstbeitragsgrundlage 2026: 8.0…",
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Mindestbeitragsgrundlage 2026: 551,10 € im Monat, 6.613,20 € im Jahr. Höchstbeitragsgrundlage 2026: 8.085 €…",
    "quellen": [
     "WKO – Beitragswesen Selbständige 2026",
     "selbststaendig-machen.at – SVS-Beiträge"
@@ -95,7 +95,7 @@
   "svs_hbgl": {
    "wert": 97020.0,
    "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Höchstbeitragsgrundlage 2026: 8.085 Euro pro Monat (97.020 Euro pro Jahr) Gesamt-Beitragssatz: 26,83 Prozen…",
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Höchstbeitragsgrundlage 2026: 8.085 € im Monat, 97.020 € im Jahr. Beitragssätze: 18,5 % Pensionsversich…",
    "quellen": [
     "WKO – Beitragswesen Selbständige 2026",
     "selbststaendig-machen.at – SVS-Beiträge"
@@ -104,7 +104,7 @@
   "svs_kv": {
    "wert": 6.8,
    "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Krankenversicherung 6,8 % der Beitragsgrundlage Gesundheitsversorgung, K…",
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Krankenversicherung 6,8 % Beitragsgrundlage, bei Gewerbetreibenden in de…",
    "quellen": [
     "WKO – Beitragswesen Selbständige 2026",
     "selbststaendig-machen.at – SVS-Beiträge"
@@ -113,7 +113,7 @@
   "svs_pv": {
    "wert": 18.5,
    "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Pensionsversicherung 18,5 % der Beitragsgrundlage staatliche Pension Kran…",
+   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Pensionsversicherung 18,5 % Beitragsgrundlage, nachträglich an das tatsäch…",
    "quellen": [
     "WKO – Beitragswesen Selbständige 2026",
     "selbststaendig-machen.at – SVS-Beiträge"
@@ -140,7 +140,7 @@
   "gfb_max_gewinn": {
    "wert": 33000.0,
    "jahr_ok": false,
-   "kontext": "finanzinfo.at – Einkommensteuer: …Grundfreibetrag (15 % bis 33.000): -€ 4.950,00 - Investitionsfreibetrag (15 %):…",
+   "kontext": "finanzinfo.at – Einkommensteuer: …Gewinnfreibetrag über 33.000 Euro, durch begünstigte Wirtschaftsgüter oder Wer…",
    "quellen": [
     "finanzinfo.at – Einkommensteuer"
    ]
