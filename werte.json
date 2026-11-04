@@ -1,7 +1,7 @@
 {
  "format": "pensionsrechner-werte",
  "version": 1,
- "erstellt": "2026-11-03T05:10:58+00:00",
+ "erstellt": "2026-11-04T05:14:27+00:00",
  "jahr": 2026,
  "quellen": [
   "WKO – Einkommensteuer & Absetzbeträge 2026",
@@ -130,11 +130,10 @@
   },
   "gfb_satz": {
    "wert": 15.0,
-   "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …46.400 € steuerfrei Arbeitsplatzpauschale 2026: Homeoffice als Selbstständiger absetzen (1.200 oder 300 Euro) Basispauschalierung 2026: 15 Prozent, 63.000 Euro Grenze und wann sich der Wec…",
+   "jahr_ok": false,
+   "kontext": "finanzinfo.at – Einkommensteuer: …Grundfreibetrag (15 % bis 33.000): -€ 4.950,00 = Zu versteuerndes E…",
    "quellen": [
-    "finanzinfo.at – Einkommensteuer",
-    "selbststaendig-machen.at – SVS-Beiträge"
+    "finanzinfo.at – Einkommensteuer"
    ]
   },
   "gfb_max_gewinn": {
@@ -143,14 +142,6 @@
    "kontext": "finanzinfo.at – Einkommensteuer: …Gewinnfreibetrag über 33.000 Euro, durch begünstigte Wirtschaftsgüter oder Wer…",
    "quellen": [
     "finanzinfo.at – Einkommensteuer"
-   ]
-  },
-  "ba_basis": {
-   "wert": 15.0,
-   "jahr_ok": true,
-   "kontext": "selbststaendig-machen.at – SVS-Beiträge: …Basispauschalierung 2026: 15 Prozent, 63.000 Euro Grenze und wann sich der Wec…",
-   "quellen": [
-    "selbststaendig-machen.at – SVS-Beiträge"
    ]
   },
   "est_grenze_1": {
