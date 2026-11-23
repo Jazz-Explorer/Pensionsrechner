@@ -1,7 +1,7 @@
 {
  "format": "pensionsrechner-werte",
  "version": 1,
- "erstellt": "2026-11-22T12:39:23+00:00",
+ "erstellt": "2026-11-23T14:48:10+00:00",
  "jahr": 2026,
  "quellen": [
   "WKO – Einkommensteuer & Absetzbeträge 2026",
@@ -38,7 +38,7 @@
   "pab_bis": {
    "wert": 31494.0,
    "jahr_ok": true,
-   "kontext": "finanz.at – Pensionistenabsetzbetrag: …bsetzbetrag senkt die Lohnsteuer auf die Pension. Er beträgt 2026 bis zu 1.020 Euro (2027: 1.044 Euro) und steht bei Pensionseinkünften bis 31.494 Euro im Jahr automatisch zu. Der erhöhte Pensioni…",
+   "kontext": "finanz.at – Pensionistenabsetzbetrag: …teuer auf die Pension. Er beträgt 2027 bis zu 1.044 Euro (2026: 1.020 Euro) und steht bei Pensionseinkünften bis 32.208 Euro im Jahr (2026: 31.494 Euro) automatisch zu. Der erhöhte Pensionistenabs…",
    "quellen": [
     "WKO – Einkommensteuer & Absetzbeträge 2026",
     "Forvis Mazars – Personalverrechnungswerte 2026",
