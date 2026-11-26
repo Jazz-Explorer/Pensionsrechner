@@ -1,7 +1,7 @@
 {
  "format": "pensionsrechner-werte",
  "version": 1,
- "erstellt": "2026-11-25T14:30:46+00:00",
+ "erstellt": "2026-11-26T13:58:24+00:00",
  "jahr": 2026,
  "quellen": [
   "WKO – Einkommensteuer & Absetzbeträge 2026",
@@ -126,14 +126,6 @@
    "quellen": [
     "WKO – Beitragswesen Selbständige 2026",
     "WKO – Gewerbliche SV-Beiträge (aktuell)"
-   ]
-  },
-  "sz_freigrenze": {
-   "wert": 2027.0,
-   "jahr_ok": false,
-   "kontext": "finanz.at – Pensionistenabsetzbetrag: …gslimits für Online-Casinos geplant Neues Urteil zu Homeoffice: Arbeitgeber muss für Internet bezahlen Neuer Zuschuss: Fast 400 Euro ab 2027 - automatische Erhöhung kommt für viele Bis zu…",
-   "quellen": [
-    "finanz.at – Pensionistenabsetzbetrag"
    ]
   },
   "gfb_satz": {
